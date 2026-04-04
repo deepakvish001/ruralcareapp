@@ -23,6 +23,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pendingCount } = useOfflineQueue();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   const languages: Language[] = ['en', 'hi', 'ta', 'te', 'bn'];
   const roles: { key: UserRole; label: string }[] = [
