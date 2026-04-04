@@ -225,25 +225,18 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Role Switch */}
+      {/* Role Display */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-card">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2">
           <UserCog className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-foreground">{t('settings.role')}</h3>
         </div>
-        <div className="space-y-2">
-          {roles.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => { setRole(r.key); navigate('/dashboard'); }}
-              className={`w-full rounded-lg px-4 py-3 text-sm font-medium text-left transition-all ${
-                role === r.key ? 'gradient-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {roles.find((r) => r.key === role)?.label || role}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground/70">
+          Your role was set when you first signed up and cannot be changed.
+        </p>
       </div>
 
       {/* Offline Sync */}

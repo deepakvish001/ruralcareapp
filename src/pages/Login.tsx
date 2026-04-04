@@ -23,7 +23,7 @@ const roles: { key: UserRole; icon: React.ElementType; color: string; accent: st
 type Step = 'auth' | 'role';
 
 export default function Login() {
-  const { t, setRole, user } = useApp();
+  const { t, setRole, user, role } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(user ? 'role' : 'auth');
   const [isSignUp, setIsSignUp] = useState(false);
