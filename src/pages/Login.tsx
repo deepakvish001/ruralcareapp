@@ -1,6 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { User, Heart, Stethoscope, Activity } from 'lucide-react';
 import { useApp, UserRole } from '@/contexts/AppContext';
+import rolePatientImg from '@/assets/role-patient.png';
+import roleHealthworkerImg from '@/assets/role-healthworker.png';
+import roleDoctorImg from '@/assets/role-doctor.png';
+
+const roleImages: Record<UserRole, string> = {
+  patient: rolePatientImg,
+  healthWorker: roleHealthworkerImg,
+  doctor: roleDoctorImg,
+};
 
 const roles: { key: UserRole; icon: React.ElementType; color: string; accent: string }[] = [
   { key: 'patient', icon: User, color: 'border-l-primary', accent: 'bg-primary/10 text-primary' },
