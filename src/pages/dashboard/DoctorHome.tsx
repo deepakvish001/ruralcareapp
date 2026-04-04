@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ListOrdered, MessageSquare, GitBranch, Video, BarChart3 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import illustDoctorHome from '@/assets/illust-doctor-home.png';
 
 export default function DoctorHome() {
   const { t } = useApp();
@@ -22,9 +23,12 @@ export default function DoctorHome() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="rounded-2xl gradient-primary p-6 text-primary-foreground">
-        <h2 className="text-xl font-bold">{t('home.welcome')}, Doctor 👋</h2>
-        <p className="mt-1 text-sm text-primary-foreground/80">{t('role.doctor.desc')}</p>
+      <div className="rounded-2xl gradient-primary p-6 text-primary-foreground flex items-center gap-4">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold">{t('home.welcome')}, Doctor 👋</h2>
+          <p className="mt-1 text-sm text-primary-foreground/80">{t('role.doctor.desc')}</p>
+        </div>
+        <img src={illustDoctorHome} alt="Doctor" loading="lazy" width={100} height={67} className="h-20 w-auto object-contain rounded-lg" />
       </div>
       <div className="grid grid-cols-3 gap-3">
         {stats.map((s) => (

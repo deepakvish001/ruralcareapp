@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarDays, BarChart3, Stethoscope, Heart, Phone } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import illustHwHome from '@/assets/illust-healthworker-home.png';
 
 export default function HealthWorkerHome() {
   const { t } = useApp();
@@ -23,9 +24,12 @@ export default function HealthWorkerHome() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="rounded-2xl gradient-primary p-6 text-primary-foreground">
-        <h2 className="text-xl font-bold">{t('home.welcome')}, Health Worker 👋</h2>
-        <p className="mt-1 text-sm text-primary-foreground/80">{t('role.healthWorker.desc')}</p>
+      <div className="rounded-2xl gradient-primary p-6 text-primary-foreground flex items-center gap-4">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold">{t('home.welcome')}, Health Worker 👋</h2>
+          <p className="mt-1 text-sm text-primary-foreground/80">{t('role.healthWorker.desc')}</p>
+        </div>
+        <img src={illustHwHome} alt="Health Worker" loading="lazy" width={100} height={67} className="h-20 w-auto object-contain rounded-lg" />
       </div>
       <div className="grid grid-cols-3 gap-3">
         {stats.map((s) => (

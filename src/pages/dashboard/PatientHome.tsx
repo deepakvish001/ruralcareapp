@@ -1,17 +1,22 @@
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Heart, MapPin, Phone, Video } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import illustSymptoms from '@/assets/illust-symptoms.png';
+import illustFirstaid from '@/assets/illust-firstaid.png';
+import illustFinddoctor from '@/assets/illust-finddoctor.png';
+import illustEmergency from '@/assets/illust-emergency.png';
+import illustTelemedicine from '@/assets/illust-telemedicine.png';
 
 export default function PatientHome() {
   const { t } = useApp();
   const navigate = useNavigate();
 
   const actions = [
-    { icon: Stethoscope, label: t('nav.symptoms'), path: '/dashboard/symptoms', color: 'gradient-primary text-primary-foreground' },
-    { icon: Heart, label: t('nav.firstAid'), path: '/dashboard/first-aid', color: 'bg-destructive/10 text-destructive' },
-    { icon: MapPin, label: t('nav.findDoctor'), path: '/dashboard/find-doctor', color: 'bg-success/10 text-success' },
-    { icon: Phone, label: t('nav.emergency'), path: '/dashboard/emergency', color: 'bg-accent/10 text-accent-foreground' },
-    { icon: Video, label: t('nav.telemedicine'), path: '/dashboard/telemedicine', color: 'bg-secondary text-secondary-foreground' },
+    { icon: Stethoscope, label: t('nav.symptoms'), path: '/dashboard/symptoms', color: 'gradient-primary text-primary-foreground', img: illustSymptoms },
+    { icon: Heart, label: t('nav.firstAid'), path: '/dashboard/first-aid', color: 'bg-destructive/10 text-destructive', img: illustFirstaid },
+    { icon: MapPin, label: t('nav.findDoctor'), path: '/dashboard/find-doctor', color: 'bg-success/10 text-success', img: illustFinddoctor },
+    { icon: Phone, label: t('nav.emergency'), path: '/dashboard/emergency', color: 'bg-accent/10 text-accent-foreground', img: illustEmergency },
+    { icon: Video, label: t('nav.telemedicine'), path: '/dashboard/telemedicine', color: 'bg-secondary text-secondary-foreground', img: illustTelemedicine },
   ];
 
   return (
@@ -27,12 +32,13 @@ export default function PatientHome() {
             <button
               key={a.path}
               onClick={() => navigate(a.path)}
-              className={`flex flex-col items-center gap-2 rounded-xl p-5 shadow-card transition-transform hover:scale-[1.02] ${a.color.includes('gradient') ? a.color : `bg-card border border-border`}`}
+              className="flex flex-col items-center gap-1 rounded-xl bg-card border border-border p-4 shadow-card transition-transform hover:scale-[1.02] overflow-hidden"
             >
-              <div className={`rounded-lg p-2 ${a.color.includes('gradient') ? '' : a.color}`}>
-                <a.icon className="h-6 w-6" />
+              <img src={a.img} alt={a.label} loading="lazy" width={80} height={80} className="h-16 w-16 object-contain" />
+              <div className={`rounded-lg p-1.5 ${a.color.includes('gradient') ? a.color : a.color}`}>
+                <a.icon className="h-4 w-4" />
               </div>
-              <span className={`text-sm font-medium ${a.color.includes('gradient') ? 'text-primary-foreground' : 'text-foreground'}`}>{a.label}</span>
+              <span className="text-sm font-medium text-foreground">{a.label}</span>
             </button>
           ))}
         </div>
