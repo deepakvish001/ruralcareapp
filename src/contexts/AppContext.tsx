@@ -3,11 +3,12 @@ import { Language, t as translate } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
-export type UserRole = 'patient' | 'healthWorker' | 'doctor';
+export type UserRole = 'patient' | 'healthWorker' | 'doctor' | 'admin';
 
 interface AppContextType {
   role: UserRole | null;
   setRole: (role: UserRole | null) => void;
+  isAdmin: boolean;
   language: Language;
   setLanguage: (lang: Language) => void;
   darkMode: boolean;
@@ -25,6 +26,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [role, setRoleState] = useState<UserRole | null>(() => {
     return (localStorage.getItem('ruralcare_role') as UserRole) || null;
   });
@@ -55,6 +57,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setRoleState(profile.role as UserRole);
                 localStorage.setItem('ruralcare_role', profile.role);
               }
+              // Check admin status
+              const { data: adminRole } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', newSession.user.id)
+                .eq('role', 'admin')
+                .maybeSingle();
+              setIsAdmin(!!adminRole);
             } catch (e) {
               console.error('Failed to fetch profile role:', e);
             }
@@ -113,7 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const t = (key: string) => translate(key, language);
 
   return (
-    <AppContext.Provider value={{ role, setRole, language, setLanguage, darkMode, setDarkMode, t, user, session, loading, signOut }}>
+    <AppContext.Provider value={{ role, setRole, isAdmin, language, setLanguage, darkMode, setDarkMode, t, user, session, loading, signOut }}>
       {children}
     </AppContext.Provider>
   );

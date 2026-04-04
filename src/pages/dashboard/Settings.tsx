@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 export default function Settings() {
-  const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
+  const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user, isAdmin } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pendingCount } = useOfflineQueue();
@@ -228,6 +228,22 @@ export default function Settings() {
 
       {/* Role Display & Change Request */}
       <RoleChangeSection role={role} roles={roles} user={user} />
+
+      {/* Admin Panel Link */}
+      {isAdmin && (
+        <button
+          onClick={() => navigate('/dashboard/admin')}
+          className="w-full rounded-xl border border-primary/30 bg-primary/5 p-4 shadow-card flex items-center justify-between hover:bg-primary/10 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <UserCog className="h-5 w-5 text-primary" />
+            <div className="text-left">
+              <h3 className="font-semibold text-foreground text-sm">Admin Panel</h3>
+              <p className="text-xs text-muted-foreground">Review role change requests</p>
+            </div>
+          </div>
+        </button>
+      )}
 
       {/* Offline Sync */}
       <button

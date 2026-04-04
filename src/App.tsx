@@ -27,6 +27,7 @@ import VideoCall from "./pages/dashboard/VideoCall";
 import Appointments from "./pages/dashboard/Appointments";
 import Medications from "./pages/dashboard/Medications";
 import SyncStatus from "./pages/dashboard/SyncStatus";
+import AdminPanel from "./pages/dashboard/AdminPanel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="appointments" element={<Appointments />} />
               <Route path="medications" element={<Medications />} />
               <Route path="sync" element={<SyncStatus />} />
+              <Route path="admin" element={<AdminPanel />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
