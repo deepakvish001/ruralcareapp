@@ -323,7 +323,7 @@ export default function Medications() {
         </div>
       )}
 
-      {isLoading ? (
+      {tab !== 'adherence' && (isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Loading...</div>
       ) : (
         <div className="space-y-3">
