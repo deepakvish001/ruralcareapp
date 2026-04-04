@@ -3,7 +3,8 @@ import { ArrowLeft, Plus, Search, Filter, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import { toast } from 'sonner';
 
 interface Patient {
@@ -32,9 +33,9 @@ export default function Patients() {
   const [filterAgeMin, setFilterAgeMin] = useState('');
   const [filterAgeMax, setFilterAgeMax] = useState('');
 
-  const { data: patients = [], isLoading } = useQuery({
-    queryKey: ['patients'],
-    queryFn: async () => {
+  const { data: patients = [], isLoading, isCached } = useOfflineCache<Patient[]>(
+    ['patients'],
+    async () => {
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -42,7 +43,7 @@ export default function Patients() {
       if (error) throw error;
       return data as Patient[];
     },
-  });
+  );
 
   const addPatient = useMutation({
     mutationFn: async () => {
@@ -106,7 +107,7 @@ export default function Patients() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">{t('patients.title')}</h2>
-        <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}</span>
+        <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}{isCached ? ' (cached)' : ''}</span>
       </div>
 
       <div className="flex gap-2">

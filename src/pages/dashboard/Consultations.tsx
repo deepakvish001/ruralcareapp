@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -48,9 +49,9 @@ export default function Consultations() {
     enabled: isPatient,
   });
 
-  const { data: consultations = [], isLoading } = useQuery({
-    queryKey: ['consultations', role],
-    queryFn: async () => {
+  const { data: consultations = [], isLoading, isCached } = useOfflineCache(
+    ['consultations', role || ''],
+    async () => {
       let query = supabase
         .from('consultations')
         .select('*, patients(name)')
@@ -64,7 +65,7 @@ export default function Consultations() {
       if (error) throw error;
       return data;
     },
-  });
+  );
 
   // Realtime subscription
   useEffect(() => {
@@ -210,7 +211,7 @@ export default function Consultations() {
   return (
     <div className="space-y-4 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
-      <h2 className="text-xl font-bold text-foreground">{t('consultations.title')}</h2>
+      <h2 className="text-xl font-bold text-foreground">{t('consultations.title')}{isCached ? ' (cached)' : ''}</h2>
 
       <div className="flex gap-2">
         <div className="relative flex-1">
