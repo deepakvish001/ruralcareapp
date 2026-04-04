@@ -45,9 +45,10 @@ export default function Consultations() {
   });
 
   const createConsultation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (patientId?: string) => {
       const { error } = await supabase.from('consultations').insert({
         doctor_id: user?.id!,
+        patient_id: patientId || null,
         messages: [],
         status: 'active',
       });
@@ -56,7 +57,7 @@ export default function Consultations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultations'] });
       setShowForm(false);
-      setNewPatientName('');
+      setSelectedPatientId('');
       toast.success('Consultation created');
     },
     onError: (err: any) => toast.error(err.message),
