@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2, CloudOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, UserRole } from '@/contexts/AppContext';
@@ -6,11 +6,13 @@ import { Language, languageNames } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 export default function Settings() {
   const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { pendingCount } = useOfflineQueue();
 
   const languages: Language[] = ['en', 'hi', 'ta', 'te', 'bn'];
   const roles: { key: UserRole; label: string }[] = [
@@ -232,6 +234,25 @@ export default function Settings() {
           ))}
         </div>
       </div>
+
+      {/* Offline Sync */}
+      <button
+        onClick={() => navigate('/dashboard/sync')}
+        className="w-full rounded-xl border border-border bg-card p-4 shadow-card flex items-center justify-between hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <CloudOff className="h-5 w-5 text-primary" />
+          <div className="text-left">
+            <h3 className="font-semibold text-foreground text-sm">Offline Sync Queue</h3>
+            <p className="text-xs text-muted-foreground">View and manage pending offline actions</p>
+          </div>
+        </div>
+        {pendingCount > 0 && (
+          <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full gradient-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+            {pendingCount}
+          </span>
+        )}
+      </button>
 
       {/* Sign Out */}
       <button
