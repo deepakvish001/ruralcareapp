@@ -1,78 +1,67 @@
 
 
-# RuralCare — Next Features Plan (Phase 2)
+# PWA Offline Support — Full Implementation Plan
 
 ## Overview
-Five features to strengthen clinical workflows, improve data-driven insights, and enhance the user experience.
 
----
+Make RuralCare fully functional without internet. The app already has `vite-plugin-pwa`, a manifest, and PWA icons. The missing pieces are: proper asset caching, offline data fallback for critical pages, and a cache-first strategy for Supabase API calls.
 
-## Feature 1: Real-Time Reports Dashboard
+## What will work offline
 
-**What**: Replace hardcoded stats in `Reports.tsx` with live data from the database — actual visit counts, follow-ups due, and trend charts based on real records.
+| Feature | Offline behavior |
+|---------|-----------------|
+| First Aid guides | Fully available (static data) |
+| Emergency contacts | Fully available (tel: links) |
+| Symptom Checker | Offline fallback analysis (already exists) |
+| Dashboard home | Cached last-known data |
+| Consultations, Reports, Patients | Show cached data or "offline" message |
+| Landing, Login | Cached shell loads; login requires network |
 
-**Steps**:
-- Query `visits` table grouped by `type` for the visit breakdown chart
-- Query `visits` grouped by month for the trend chart
-- Count visits with `follow_up_date` in the next 7 days for "follow-ups due"
-- Count visits in the current month for "visits this month"
-- All data fetched via React Query; no new tables needed
+## Steps
 
----
+### 1. Enhance Workbox caching strategy in `vite.config.ts`
 
-## Feature 2: Consultation Chat with Patient View
+- Add `runtimeCaching` rules to the VitePWA config:
+  - **Supabase REST API** (`xdpzkzmrvdixuupvgfsr.supabase.co/rest/*`): `NetworkFirst` with 30s timeout, falling back to cache. This means previously loaded data is available offline.
+  - **Supabase Auth**: `NetworkOnly` (auth must always hit network)
+  - **Google Fonts / CDN assets**: `CacheFirst` with 30-day expiry
+- Keep existing `globPatterns` for static assets (JS, CSS, HTML, icons)
+- Keep `navigateFallbackDenylist: [/^\/~oauth/]`
 
-**What**: Let patients see and respond to their consultations (currently only doctors can chat). Link consultations to patient accounts via `patient_user_id`.
+### 2. Add manifest link to `index.html`
 
-**Steps**:
-- In `Consultations.tsx`, when role is `patient`, query consultations where `patient_user_id = user.id`
-- Allow patients to send messages (append to the `messages` JSON array)
-- Show patient-side consultation list with doctor name (join `doctors` table)
-- Add realtime subscription so both sides see new messages instantly
+- Add `<link rel="manifest" href="/manifest.json">` to `<head>`
+- Add `<meta name="theme-color" content="#2563EB">`
+- Add `<meta name="apple-mobile-web-app-capable" content="yes">`
+- Add apple-touch-icon link
 
----
+### 3. Create an Install Prompt component
 
-## Feature 3: Telemedicine Improvement — Doctor Assignment & Video Placeholder
+- A small `InstallPWA.tsx` banner/button that captures the `beforeinstallprompt` event
+- Shows "Install RuralCare" button when the prompt is available
+- Dismissible, stored in localStorage so it doesn't reappear after dismissal
+- Shown on the Dashboard layout
 
-**What**: Fix the placeholder `doctor_id` in telemedicine requests. Let patients pick a doctor, and add a "Join Call" button that links to a video placeholder.
+### 4. Add offline-aware data hooks
 
-**Steps**:
-- In the telemedicine request form, add a doctor selector (query available doctors)
-- Store the selected `doctor_id` and `patient_id` on the consultation
-- Add a "Join Call" button on active consultations that opens a placeholder video room page
-- Create a simple `/dashboard/video-call/:consultationId` page with camera/mic permission prompts and a "call in progress" UI
+- Create a `useOfflineCache` utility hook that wraps React Query:
+  - On successful fetch, saves response to `localStorage` (keyed by query key)
+  - When offline (`!navigator.onLine`), returns cached data instead of fetching
+- Apply to critical queries: dashboard stats, patients list, consultations list
+- Show a subtle "(cached)" indicator when serving stale data
 
----
+### 5. Update `OfflineBanner.tsx`
 
-## Feature 4: Patient Medical History Export
-
-**What**: Let health workers or doctors export a patient's visit history as a downloadable PDF summary — useful for referrals to hospitals.
-
-**Steps**:
-- Add an "Export" button on the `PatientDetail` page
-- Generate a PDF client-side (using `jspdf` or `html2canvas`) with patient info, visit history, conditions, and referrals
-- Include a header with the app name and date generated
-- Download the file directly in the browser
-
----
-
-## Feature 5: Multi-Language Content Expansion
-
-**What**: The app has an i18n system but translations may be incomplete. Audit and complete translations for Hindi and the existing languages.
-
-**Steps**:
-- Audit `src/i18n/translations.ts` for missing keys across all pages
-- Add translations for new features (notifications, doctor profile, patient detail tabs)
-- Add a language indicator in the header or settings showing the current language
-- Ensure all user-facing strings use `t()` — no hardcoded English in components
+- Improve messaging: "You're offline — showing saved data. Some features need internet."
+- Add animation for appear/disappear transitions
 
 ---
 
 ## Technical Notes
 
-- No new database tables required (Feature 3's video page is client-side only)
-- Feature 1 uses aggregate queries on existing `visits` and `patients` tables
-- Feature 2 adds realtime to `consultations` (ALTER PUBLICATION)
-- Feature 4 adds a client-side dependency (`jspdf`) — no backend changes
-- Feature 5 is a content-only change in the translations file
+- No new database tables or migrations needed
+- No new dependencies — `vite-plugin-pwa` with Workbox handles everything
+- Service worker only activates in production (already configured with `devOptions: { enabled: false }`)
+- The iframe/preview guard in `main.tsx` is already in place
+- First Aid and Emergency pages are fully static — they work offline automatically once cached
 
