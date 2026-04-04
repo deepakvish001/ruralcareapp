@@ -1,10 +1,10 @@
-import { ArrowLeft, Globe, Moon, Sun, UserCog, Info } from 'lucide-react';
+import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, UserRole } from '@/contexts/AppContext';
 import { Language, languageNames } from '@/i18n/translations';
 
 export default function Settings() {
-  const { t, language, setLanguage, darkMode, setDarkMode, role, setRole } = useApp();
+  const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
   const navigate = useNavigate();
 
   const languages: Language[] = ['en', 'hi', 'ta', 'te', 'bn'];
@@ -14,10 +14,30 @@ export default function Settings() {
     { key: 'doctor', label: t('role.doctor') },
   ];
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <h2 className="text-xl font-bold text-foreground">{t('settings.title')}</h2>
+
+      {/* Account */}
+      {user && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
+              {(user.email?.[0] || 'U').toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground truncate">{user.user_metadata?.display_name || user.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Language */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-card">
@@ -76,6 +96,15 @@ export default function Settings() {
           ))}
         </div>
       </div>
+
+      {/* Sign Out */}
+      <button
+        onClick={handleSignOut}
+        className="w-full flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-destructive font-medium hover:bg-destructive/10 transition-colors"
+      >
+        <LogOut className="h-5 w-5" />
+        {t('settings.signOut') || 'Sign Out'}
+      </button>
 
       {/* About */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-card">
