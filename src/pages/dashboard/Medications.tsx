@@ -6,6 +6,7 @@ import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 
 const frequencyOptions = ['Once daily', 'Twice daily', 'Three times daily', 'Every 8 hours', 'As needed'];
@@ -35,6 +36,7 @@ export default function Medications() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [showForm, setShowForm] = useState(false);
   const [tab, setTab] = useState<'active' | 'history' | 'adherence'>('active');
   const [adherenceRange, setAdherenceRange] = useState<'week' | 'month'>('week');
@@ -127,19 +129,24 @@ export default function Medications() {
 
   const createMedication = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('medications').insert({
+      const payload = {
         user_id: user!.id,
         name,
         dosage,
         frequency,
         time_slots: timeSlots,
         notes: notes || null,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'medications', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('medications').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medications'] });
-      toast.success('Medication added!');
+      if (navigator.onLine) toast.success('Medication added!');
       resetForm();
     },
     onError: () => toast.error('Failed to add medication'),
@@ -147,17 +154,22 @@ export default function Medications() {
 
   const logMedication = useMutation({
     mutationFn: async ({ medicationId, scheduledTime }: { medicationId: string; scheduledTime: string }) => {
-      const { error } = await supabase.from('medication_logs').insert({
+      const payload = {
         medication_id: medicationId,
         user_id: user!.id,
         scheduled_time: scheduledTime,
         status: 'taken',
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'medication_logs', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('medication_logs').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medication-logs-today'] });
-      toast.success('Marked as taken ✓');
+      if (navigator.onLine) toast.success('Marked as taken ✓');
     },
   });
 
@@ -259,6 +271,14 @@ export default function Medications() {
           {remindersEnabled ? <Bell className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5" />}
         </button>
       </div>
+
+      {/* Pending sync indicator */}
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
 
       {/* Today's progress */}
       {activeMeds.length > 0 && (

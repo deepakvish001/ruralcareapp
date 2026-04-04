@@ -1,7 +1,8 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Settings, LogOut } from 'lucide-react';
+import { Settings, LogOut, CloudOff } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import BottomNav from '@/components/BottomNav';
 import SOSButton from '@/components/SOSButton';
 import NotificationBell from '@/components/NotificationBell';
@@ -10,6 +11,7 @@ import InstallPWA from '@/components/InstallPWA';
 export default function DashboardLayout() {
   const { role, t, user, loading, signOut } = useApp();
   const navigate = useNavigate();
+  const { pendingCount } = useOfflineQueue();
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
@@ -40,6 +42,12 @@ export default function DashboardLayout() {
             <p className="text-xs text-muted-foreground">{t(`role.${role}`)}</p>
           </div>
           <div className="flex items-center gap-1">
+            {pendingCount > 0 && (
+              <div className="flex items-center gap-1 rounded-full bg-warning/10 border border-warning/30 px-2 py-1 text-[10px] font-medium text-warning-foreground mr-1">
+                <CloudOff className="h-3 w-3" />
+                {pendingCount}
+              </div>
+            )}
             <NotificationBell />
             <button
               onClick={() => navigate('/dashboard/settings')}
