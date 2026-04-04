@@ -1,14 +1,25 @@
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarDays, BarChart3, Stethoscope, Heart, Phone } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import illustHwHome from '@/assets/illust-healthworker-home.png';
 
 export default function HealthWorkerHome() {
   const { t } = useApp();
   const navigate = useNavigate();
 
+  const { data: patientCount = 0 } = useQuery({
+    queryKey: ['patients-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('patients').select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   const stats = [
-    { label: t('reports.totalPatients'), value: JSON.parse(localStorage.getItem('ruralcare_patients') || '[]').length.toString() },
+    { label: t('reports.totalPatients'), value: patientCount.toString() },
     { label: t('reports.visitsMonth'), value: '0' },
     { label: t('reports.followUpsDue'), value: '0' },
   ];

@@ -1,6 +1,8 @@
 import { ArrowLeft, Users, Calendar, Activity, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const visitData = [
@@ -22,10 +24,17 @@ export default function Reports() {
   const { t } = useApp();
   const navigate = useNavigate();
 
-  const patients = JSON.parse(localStorage.getItem('ruralcare_patients') || '[]');
+  const { data: patientCount = 0 } = useQuery({
+    queryKey: ['patients-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('patients').select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
   const stats = [
-    { icon: Users, label: t('reports.totalPatients'), value: patients.length.toString(), color: 'text-primary' },
+    { icon: Users, label: t('reports.totalPatients'), value: patientCount.toString(), color: 'text-primary' },
     { icon: Calendar, label: t('reports.visitsMonth'), value: '38', color: 'text-success' },
     { icon: Activity, label: t('reports.vaccinations'), value: '18', color: 'text-accent-foreground' },
     { icon: Clock, label: t('reports.followUpsDue'), value: '7', color: 'text-destructive' },
