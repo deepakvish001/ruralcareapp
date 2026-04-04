@@ -182,7 +182,7 @@
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
+  animation: fade-in-up 0.6s ease-out;
 }
 
 .animate-fade-in-up-delay-1 {
