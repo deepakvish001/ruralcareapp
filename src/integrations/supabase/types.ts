@@ -136,6 +136,89 @@ export type Database = {
         }
         Relationships: []
       }
+      medication_logs: {
+        Row: {
+          created_at: string
+          id: string
+          medication_id: string
+          scheduled_time: string | null
+          status: string
+          taken_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medication_id: string
+          scheduled_time?: string | null
+          status?: string
+          taken_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medication_id?: string
+          scheduled_time?: string | null
+          status?: string
+          taken_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_logs_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          active: boolean
+          created_at: string
+          dosage: string
+          end_date: string | null
+          frequency: string
+          id: string
+          name: string
+          notes: string | null
+          start_date: string
+          time_slots: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          dosage: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          start_date?: string
+          time_slots?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          dosage?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string
+          time_slots?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null

@@ -25,6 +25,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.settings': 'Settings',
     'nav.telemedicine': 'Telemedicine',
     'nav.emergency': 'Emergency',
+    'nav.medications': 'Medications',
     'role.patient': 'Patient',
     'role.healthWorker': 'Health Worker',
     'role.doctor': 'Doctor',
