@@ -1,6 +1,16 @@
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Settings, LogOut, CloudOff } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import BottomNav from '@/components/BottomNav';
@@ -12,6 +22,7 @@ export default function DashboardLayout() {
   const { role, t, user, loading, signOut } = useApp();
   const navigate = useNavigate();
   const { pendingCount } = useOfflineQueue();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
@@ -61,7 +72,7 @@ export default function DashboardLayout() {
             </button>
             <div className="w-px h-6 bg-border mx-0.5" />
             <button
-              onClick={handleSignOut}
+              onClick={() => setShowSignOutDialog(true)}
               className="rounded-lg p-2 text-destructive/70 hover:bg-destructive/15 hover:text-destructive transition-colors"
               aria-label="Sign out"
             >
@@ -78,6 +89,26 @@ export default function DashboardLayout() {
       <SOSButton />
       <InstallPWA />
       <BottomNav />
+
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? Any unsaved changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSignOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
