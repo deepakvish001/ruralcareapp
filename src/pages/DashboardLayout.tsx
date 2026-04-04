@@ -62,6 +62,7 @@ export default function DashboardLayout() {
       </main>
 
       <SOSButton />
+      <InstallPWA />
       <BottomNav />
     </div>
   );
