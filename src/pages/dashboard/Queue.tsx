@@ -1,9 +1,11 @@
-import { ArrowLeft, AlertTriangle, Clock, Plus } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Clock, Plus, CloudOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 
 const priorityConfig = {

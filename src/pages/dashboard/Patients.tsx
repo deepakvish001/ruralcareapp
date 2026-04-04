@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Plus, Search, Filter, X } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Filter, X, CloudOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 
 interface Patient {
