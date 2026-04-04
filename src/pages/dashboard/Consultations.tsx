@@ -218,7 +218,10 @@ export default function Consultations() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">{((c as any).patients?.name?.[0] || 'C').toUpperCase()}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-foreground">{(c as any).patients?.name || 'Consultation'}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground">{(c as any).patients?.name || 'Consultation'}</h3>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${c.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>{c.status}</span>
+                    </div>
                     <span className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</span>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{lastMsg?.text || 'No messages yet'}</p>
