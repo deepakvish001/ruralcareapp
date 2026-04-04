@@ -1,9 +1,11 @@
-import { ArrowLeft, CalendarDays, Clock, Plus, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, Plus, CheckCircle, XCircle, CloudOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
@@ -25,6 +27,7 @@ export default function Appointments() {
   const { t, user, role } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [showForm, setShowForm] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -35,19 +38,19 @@ export default function Appointments() {
   const isPatient = role === 'patient';
   const isDoctor = role === 'doctor';
 
-  const { data: doctors = [] } = useQuery({
-    queryKey: ['doctors-for-booking'],
-    queryFn: async () => {
+  const { data: doctors = [] } = useOfflineCache(
+    ['doctors-for-booking'],
+    async () => {
       const { data, error } = await supabase.from('doctors').select('id, name, specialty, user_id').eq('available', true);
       if (error) throw error;
       return data;
     },
-    enabled: isPatient,
-  });
+    { enabled: isPatient },
+  );
 
-  const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ['appointments'],
-    queryFn: async () => {
+  const { data: appointments = [], isLoading, isCached } = useOfflineCache(
+    ['appointments'],
+    async () => {
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
@@ -55,7 +58,7 @@ export default function Appointments() {
       if (error) throw error;
       return data;
     },
-  });
+  );
 
   const createAppointment = useMutation({
     mutationFn: async () => {
@@ -63,13 +66,18 @@ export default function Appointments() {
       if (!doctor?.user_id) throw new Error('Please select a doctor');
       if (!selectedDate) throw new Error('Please select a date');
       if (!selectedSlot) throw new Error('Please select a time slot');
-      const { error } = await supabase.from('appointments').insert({
+      const payload = {
         patient_user_id: user?.id!,
         doctor_id: doctor.user_id,
         appointment_date: format(selectedDate, 'yyyy-MM-dd'),
         time_slot: selectedSlot,
         reason: reason || null,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'appointments', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('appointments').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -79,19 +87,23 @@ export default function Appointments() {
       setSelectedDate(undefined);
       setSelectedSlot('');
       setReason('');
-      toast.success('Appointment booked!');
+      if (navigator.onLine) toast.success('Appointment booked!');
     },
     onError: (err: any) => toast.error(err.message),
   });
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'appointments', type: 'update', payload: { status }, match: { id } });
+        return;
+      }
       const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      toast.success('Appointment updated');
+      if (navigator.onLine) toast.success('Appointment updated');
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -107,7 +119,16 @@ export default function Appointments() {
       <div className="flex items-center gap-2">
         <CalendarDays className="h-6 w-6 text-primary" />
         <h2 className="text-xl font-bold text-foreground">{t('appointments.title') || 'Appointments'}</h2>
+        {isCached && <span className="text-[10px] text-muted-foreground">(cached)</span>}
       </div>
+
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <CloudOff className="h-3.5 w-3.5" />
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
 
       <div className="flex gap-2">
         {(['upcoming', 'past'] as const).map((key) => (

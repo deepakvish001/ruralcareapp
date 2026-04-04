@@ -1,9 +1,11 @@
-import { ArrowLeft, GitBranch, Plus } from 'lucide-react';
+import { ArrowLeft, GitBranch, Plus, CloudOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
@@ -16,13 +18,14 @@ export default function Referrals() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'rejected'>('all');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ patient_name: '', destination_hospital: '', reason: '' });
 
-  const { data: referrals = [], isLoading } = useQuery({
-    queryKey: ['referrals'],
-    queryFn: async () => {
+  const { data: referrals = [], isLoading, isCached } = useOfflineCache(
+    ['referrals'],
+    async () => {
       const { data, error } = await supabase
         .from('referrals')
         .select('*, profiles:referring_doctor_id(display_name)')
@@ -30,23 +33,28 @@ export default function Referrals() {
       if (error) throw error;
       return data;
     },
-  });
+  );
 
   const addReferral = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('referrals').insert({
+      const payload = {
         patient_name: form.patient_name,
         destination_hospital: form.destination_hospital,
         reason: form.reason,
         referring_doctor_id: user?.id!,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'referrals', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('referrals').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['referrals'] });
       setShowForm(false);
       setForm({ patient_name: '', destination_hospital: '', reason: '' });
-      toast.success('Referral created');
+      if (navigator.onLine) toast.success('Referral created');
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -56,7 +64,19 @@ export default function Referrals() {
   return (
     <div className="space-y-4 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
-      <h2 className="text-xl font-bold text-foreground">{t('referrals.title')}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">{t('referrals.title')}</h2>
+        {isCached && <span className="text-xs text-muted-foreground">(cached)</span>}
+      </div>
+
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <CloudOff className="h-3.5 w-3.5" />
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
+
       <div className="flex gap-2 overflow-x-auto">
         {(['all', 'pending', 'completed', 'rejected'] as const).map((key) => (
           <button key={key} onClick={() => setFilter(key)}
