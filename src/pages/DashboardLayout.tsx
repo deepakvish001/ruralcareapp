@@ -5,6 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import SOSButton from '@/components/SOSButton';
 import NotificationBell from '@/components/NotificationBell';
+import InstallPWA from '@/components/InstallPWA';
 
 export default function DashboardLayout() {
   const { role, t, user, loading, signOut } = useApp();
