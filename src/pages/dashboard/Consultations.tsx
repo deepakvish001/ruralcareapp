@@ -56,7 +56,7 @@ export default function Consultations() {
     mutationFn: async () => {
       const consultation = consultations.find((c) => c.id === activeChat);
       if (!consultation) return;
-      const currentMessages = (consultation.messages as unknown as ChatMessage[]) || [];
+      const currentMessages = (consultation.messages as unknown as ChatMessage[]) ?? [];
       const newMsg: ChatMessage = {
         id: Date.now().toString(),
         text: message,
