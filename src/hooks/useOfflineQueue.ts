@@ -47,7 +47,7 @@ export function dequeue(id: string) {
 
 // --- Sync engine ---
 
-async function processAction(action: QueuedAction): Promise<boolean> {
+export async function processAction(action: QueuedAction): Promise<boolean> {
   try {
     if (action.type === 'insert') {
       const { error } = await (supabase as any).from(action.table).insert(action.payload);
