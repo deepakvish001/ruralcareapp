@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Stethoscope, Heart, MapPin, Users, CalendarDays, BarChart3, ListOrdered, MessageSquare, GitBranch, Settings } from 'lucide-react';
+import { Home, Stethoscope, Heart, MapPin, Users, CalendarDays, BarChart3, ListOrdered, MessageSquare, GitBranch, CalendarCheck, Settings } from 'lucide-react';
 import { useApp, UserRole } from '@/contexts/AppContext';
 
 interface NavItem {
@@ -12,7 +12,7 @@ const navItems: Record<UserRole, NavItem[]> = {
   patient: [
     { icon: Home, labelKey: 'nav.home', path: '/dashboard' },
     { icon: Stethoscope, labelKey: 'nav.symptoms', path: '/dashboard/symptoms' },
-    { icon: Heart, labelKey: 'nav.firstAid', path: '/dashboard/first-aid' },
+    { icon: CalendarCheck, labelKey: 'nav.appointments', path: '/dashboard/appointments' },
     { icon: MapPin, labelKey: 'nav.findDoctor', path: '/dashboard/find-doctor' },
   ],
   healthWorker: [

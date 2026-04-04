@@ -24,6 +24,7 @@ import Referrals from "./pages/dashboard/Referrals";
 import Telemedicine from "./pages/dashboard/Telemedicine";
 import Settings from "./pages/dashboard/Settings";
 import VideoCall from "./pages/dashboard/VideoCall";
+import Appointments from "./pages/dashboard/Appointments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="referrals" element={<Referrals />} />
               <Route path="telemedicine" element={<Telemedicine />} />
               <Route path="video-call/:consultationId" element={<VideoCall />} />
+              <Route path="appointments" element={<Appointments />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
