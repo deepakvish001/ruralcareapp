@@ -54,13 +54,16 @@ export default function DashboardLayout() {
             <NotificationBell />
             <button
               onClick={() => navigate('/dashboard/settings')}
-              className="rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors"
+              className="rounded-lg p-2 bg-muted/60 text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+              aria-label="Settings"
             >
               <Settings className="h-5 w-5" />
             </button>
+            <div className="w-px h-6 bg-border mx-0.5" />
             <button
               onClick={handleSignOut}
-              className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="rounded-lg p-2 text-destructive/70 hover:bg-destructive/15 hover:text-destructive transition-colors"
+              aria-label="Sign out"
             >
               <LogOut className="h-5 w-5" />
             </button>
