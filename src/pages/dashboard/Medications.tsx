@@ -129,19 +129,24 @@ export default function Medications() {
 
   const createMedication = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('medications').insert({
+      const payload = {
         user_id: user!.id,
         name,
         dosage,
         frequency,
         time_slots: timeSlots,
         notes: notes || null,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'medications', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('medications').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medications'] });
-      toast.success('Medication added!');
+      if (navigator.onLine) toast.success('Medication added!');
       resetForm();
     },
     onError: () => toast.error('Failed to add medication'),
