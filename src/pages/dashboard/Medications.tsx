@@ -74,7 +74,57 @@ export default function Medications() {
     enabled: !!user,
   });
 
-  const createMedication = useMutation({
+  // Fetch historical logs for adherence chart
+  const daysBack = adherenceRange === 'week' ? 7 : 30;
+  const rangeStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysBack + 1);
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }, [daysBack]);
+
+  const { data: historicalLogs = [] } = useQuery({
+    queryKey: ['medication-logs-history', user?.id, adherenceRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('medication_logs')
+        .select('*')
+        .gte('taken_at', rangeStart);
+      if (error) throw error;
+      return data as MedicationLog[];
+    },
+    enabled: !!user,
+  });
+
+  const adherenceData = useMemo(() => {
+    const result: { day: string; taken: number; missed: number }[] = [];
+    for (let i = daysBack - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const label = adherenceRange === 'week'
+        ? d.toLocaleDateString('en', { weekday: 'short' })
+        : d.toLocaleDateString('en', { day: 'numeric', month: 'short' });
+
+      const logsForDay = historicalLogs.filter((l) => l.taken_at.startsWith(dateStr));
+      const takenCount = logsForDay.length;
+      // Total expected = sum of time_slots for all active meds that existed by that date
+      const expected = medications
+        .filter((m) => new Date(m.start_date) <= d && (!m.end_date || new Date(m.end_date) >= d))
+        .reduce((sum, m) => sum + m.time_slots.length, 0);
+      const missed = Math.max(0, expected - takenCount);
+      result.push({ day: label, taken: takenCount, missed });
+    }
+    return result;
+  }, [historicalLogs, medications, daysBack, adherenceRange]);
+
+  const overallAdherence = useMemo(() => {
+    const totalTaken = adherenceData.reduce((s, d) => s + d.taken, 0);
+    const totalExpected = adherenceData.reduce((s, d) => s + d.taken + d.missed, 0);
+    return totalExpected > 0 ? Math.round((totalTaken / totalExpected) * 100) : 0;
+  }, [adherenceData]);
+
+
     mutationFn: async () => {
       const { error } = await supabase.from('medications').insert({
         user_id: user!.id,
