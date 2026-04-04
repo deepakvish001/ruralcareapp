@@ -272,6 +272,14 @@ export default function Medications() {
         </button>
       </div>
 
+      {/* Pending sync indicator */}
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
+
       {/* Today's progress */}
       {activeMeds.length > 0 && (
         <div className="rounded-xl gradient-primary p-4 text-primary-foreground">
