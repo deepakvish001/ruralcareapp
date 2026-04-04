@@ -4,7 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import { toast } from 'sonner';
 
 const frequencyOptions = ['Once daily', 'Twice daily', 'Three times daily', 'Every 8 hours', 'As needed'];
@@ -46,9 +47,9 @@ export default function Medications() {
   const [timeSlots, setTimeSlots] = useState<string[]>(['08:00']);
   const [notes, setNotes] = useState('');
 
-  const { data: medications = [], isLoading } = useQuery({
-    queryKey: ['medications', user?.id],
-    queryFn: async () => {
+  const { data: medications = [], isLoading } = useOfflineCache<Medication[]>(
+    ['medications', user?.id || ''],
+    async () => {
       const { data, error } = await supabase
         .from('medications')
         .select('*')
@@ -56,12 +57,12 @@ export default function Medications() {
       if (error) throw error;
       return data as Medication[];
     },
-    enabled: !!user,
-  });
+    { enabled: !!user },
+  );
 
-  const { data: todayLogs = [] } = useQuery({
-    queryKey: ['medication-logs-today', user?.id],
-    queryFn: async () => {
+  const { data: todayLogs = [] } = useOfflineCache<MedicationLog[]>(
+    ['medication-logs-today', user?.id || ''],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('medication_logs')
@@ -71,8 +72,8 @@ export default function Medications() {
       if (error) throw error;
       return data as MedicationLog[];
     },
-    enabled: !!user,
-  });
+    { enabled: !!user },
+  );
 
   // Fetch historical logs for adherence chart
   const daysBack = adherenceRange === 'week' ? 7 : 30;
@@ -83,9 +84,9 @@ export default function Medications() {
     return d.toISOString();
   }, [daysBack]);
 
-  const { data: historicalLogs = [] } = useQuery({
-    queryKey: ['medication-logs-history', user?.id, adherenceRange],
-    queryFn: async () => {
+  const { data: historicalLogs = [] } = useOfflineCache<MedicationLog[]>(
+    ['medication-logs-history', user?.id || '', adherenceRange],
+    async () => {
       const { data, error } = await supabase
         .from('medication_logs')
         .select('*')
@@ -93,8 +94,8 @@ export default function Medications() {
       if (error) throw error;
       return data as MedicationLog[];
     },
-    enabled: !!user,
-  });
+    { enabled: !!user },
+  );
 
   const adherenceData = useMemo(() => {
     const result: { day: string; taken: number; missed: number }[] = [];
