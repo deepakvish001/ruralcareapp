@@ -36,6 +36,7 @@ export default function Medications() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [showForm, setShowForm] = useState(false);
   const [tab, setTab] = useState<'active' | 'history' | 'adherence'>('active');
   const [adherenceRange, setAdherenceRange] = useState<'week' | 'month'>('week');
