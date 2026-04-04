@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Stethoscope, Heart, MapPin, Users, CalendarDays, BarChart3, ListOrdered, MessageSquare, GitBranch, Settings } from 'lucide-react';
+import { Home, Stethoscope, Heart, MapPin, Users, CalendarDays, BarChart3, ListOrdered, MessageSquare, GitBranch, CalendarCheck, Settings } from 'lucide-react';
 import { useApp, UserRole } from '@/contexts/AppContext';
 
 interface NavItem {
