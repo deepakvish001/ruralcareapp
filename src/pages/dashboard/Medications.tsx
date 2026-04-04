@@ -84,9 +84,9 @@ export default function Medications() {
     return d.toISOString();
   }, [daysBack]);
 
-  const { data: historicalLogs = [] } = useQuery({
-    queryKey: ['medication-logs-history', user?.id, adherenceRange],
-    queryFn: async () => {
+  const { data: historicalLogs = [] } = useOfflineCache<MedicationLog[]>(
+    ['medication-logs-history', user?.id || '', adherenceRange],
+    async () => {
       const { data, error } = await supabase
         .from('medication_logs')
         .select('*')
@@ -94,8 +94,8 @@ export default function Medications() {
       if (error) throw error;
       return data as MedicationLog[];
     },
-    enabled: !!user,
-  });
+    { enabled: !!user },
+  );
 
   const adherenceData = useMemo(() => {
     const result: { day: string; taken: number; missed: number }[] = [];
