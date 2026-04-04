@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Heart, Stethoscope, Activity, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useApp, UserRole } from '@/contexts/AppContext';
@@ -23,7 +23,7 @@ const roles: { key: UserRole; icon: React.ElementType; color: string; accent: st
 type Step = 'auth' | 'role';
 
 export default function Login() {
-  const { t, setRole, user } = useApp();
+  const { t, setRole, user, role } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(user ? 'role' : 'auth');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -31,6 +31,13 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // If user already has a role, go straight to dashboard
+  useEffect(() => {
+    if (user && role) {
+      navigate('/dashboard');
+    }
+  }, [user, role, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
