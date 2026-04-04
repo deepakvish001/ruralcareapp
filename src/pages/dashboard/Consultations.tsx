@@ -77,6 +77,37 @@ export default function Consultations() {
     },
   });
 
+  const closeConsultation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('consultations')
+        .update({ status: 'closed' })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      toast.success('Consultation closed');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const deleteConsultation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('consultations')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setActiveChat(null);
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      toast.success('Consultation deleted');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const activeConsultation = consultations.find((c) => c.id === activeChat);
 
   if (activeChat && activeConsultation) {
@@ -87,9 +118,19 @@ export default function Consultations() {
           <button onClick={() => setActiveChat(null)} className="text-muted-foreground"><ChevronLeft className="h-5 w-5" /></button>
           <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
           <h3 className="font-semibold text-foreground">Consultation</h3>
-          <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium ${activeConsultation.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-            {activeConsultation.status}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${activeConsultation.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+              {activeConsultation.status}
+            </span>
+            {activeConsultation.status === 'active' && (
+              <button onClick={() => closeConsultation.mutate(activeChat)} className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground" title="Close consultation">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            <button onClick={() => { if (confirm('Delete this consultation?')) deleteConsultation.mutate(activeChat); }} className="rounded-lg border border-destructive/30 p-1.5 text-destructive hover:bg-destructive/10" title="Delete consultation">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
           {messages.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No messages yet. Start the conversation.</p>}
