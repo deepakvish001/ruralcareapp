@@ -11,7 +11,7 @@ export default function SOSButton() {
   return (
     <button
       onClick={handleSOS}
-      className="fixed bottom-24 right-4 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-destructive shadow-lg animate-pulse-sos"
+      className="fixed bottom-[5.5rem] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-destructive shadow-lg animate-pulse-sos"
       aria-label={t('sos.emergency')}
     >
       <Phone className="h-7 w-7 text-destructive-foreground" />

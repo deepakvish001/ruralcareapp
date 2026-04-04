@@ -53,7 +53,7 @@ export default function BottomNav() {
               }`}
             >
               <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-              <span className="truncate max-w-[64px]">{t(item.labelKey)}</span>
+              <span className="truncate max-w-[72px] text-[10px]">{t(item.labelKey)}</span>
             </button>
           );
         })}

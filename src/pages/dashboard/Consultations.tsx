@@ -269,13 +269,13 @@ export default function Consultations() {
       )}
 
       {!isPatient && !showForm && (
-        <button onClick={() => setShowForm(true)} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
+        <button onClick={() => setShowForm(true)} className="fixed bottom-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
           <Plus className="h-5 w-5" /> New Consultation
         </button>
       )}
 
       {!isPatient && showForm && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm rounded-xl border border-border bg-card p-4 shadow-elevated space-y-3">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-20 w-[90%] max-w-sm rounded-xl border border-border bg-card p-4 shadow-elevated space-y-3">
           <h4 className="font-semibold text-foreground text-sm">Select Patient</h4>
           <select
             value={selectedPatientId}
