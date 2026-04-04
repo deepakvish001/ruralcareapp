@@ -32,6 +32,13 @@ export default function Login() {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // If user already has a role, go straight to dashboard
+  useEffect(() => {
+    if (user && role) {
+      navigate('/dashboard');
+    }
+  }, [user, role, navigate]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
