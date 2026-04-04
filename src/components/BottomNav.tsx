@@ -40,7 +40,7 @@ export default function BottomNav() {
 
   if (!role) return null;
 
-  const items = navItems[role];
+  const items = navItems[role] || [];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card glass">
