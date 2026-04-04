@@ -1,6 +1,16 @@
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Settings, LogOut, CloudOff } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import BottomNav from '@/components/BottomNav';
