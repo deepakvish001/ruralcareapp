@@ -157,13 +157,9 @@
     opacity: 0;
     transform: translateY(20px);
   }
-  99.99% {
-    opacity: 1;
-    transform: translateY(0);
-  }
   to {
     opacity: 1;
-    transform: none;
+    transform: translateY(0);
   }
 }
 
