@@ -60,9 +60,9 @@ export default function Medications() {
     { enabled: !!user },
   );
 
-  const { data: todayLogs = [] } = useQuery({
-    queryKey: ['medication-logs-today', user?.id],
-    queryFn: async () => {
+  const { data: todayLogs = [] } = useOfflineCache<MedicationLog[]>(
+    ['medication-logs-today', user?.id || ''],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('medication_logs')
@@ -72,8 +72,8 @@ export default function Medications() {
       if (error) throw error;
       return data as MedicationLog[];
     },
-    enabled: !!user,
-  });
+    { enabled: !!user },
+  );
 
   // Fetch historical logs for adherence chart
   const daysBack = adherenceRange === 'week' ? 7 : 30;
