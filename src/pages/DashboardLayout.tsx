@@ -1,7 +1,8 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Settings, LogOut } from 'lucide-react';
+import { Settings, LogOut, CloudOff } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import BottomNav from '@/components/BottomNav';
 import SOSButton from '@/components/SOSButton';
 import NotificationBell from '@/components/NotificationBell';
