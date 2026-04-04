@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, CalendarDays, BarChart3, Stethoscope, Heart, Phone } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import illustHwHome from '@/assets/illust-healthworker-home.png';
 
 export default function HealthWorkerHome() {
