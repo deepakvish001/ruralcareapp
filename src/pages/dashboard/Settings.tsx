@@ -1,4 +1,5 @@
-import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2, CloudOff, Mail } from 'lucide-react';
+import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2, CloudOff } from 'lucide-react';
+import RoleChangeSection from '@/components/RoleChangeSection';
 import {
   AlertDialog,
   AlertDialogAction,
