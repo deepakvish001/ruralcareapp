@@ -9,14 +9,14 @@ export default function HealthWorkerHome() {
   const { t } = useApp();
   const navigate = useNavigate();
 
-  const { data: patientCount = 0 } = useQuery({
-    queryKey: ['patients-count'],
-    queryFn: async () => {
+  const { data: patientCount = 0, isCached } = useOfflineCache<number>(
+    ['patients-count'],
+    async () => {
       const { count, error } = await supabase.from('patients').select('*', { count: 'exact', head: true });
       if (error) throw error;
       return count || 0;
     },
-  });
+  );
 
   const stats = [
     { label: t('reports.totalPatients'), value: patientCount.toString() },

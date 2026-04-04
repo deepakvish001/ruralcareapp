@@ -107,7 +107,7 @@ export default function Patients() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">{t('patients.title')}</h2>
-        <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}</span>
+        <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}{isCached ? ' (cached)' : ''}</span>
       </div>
 
       <div className="flex gap-2">

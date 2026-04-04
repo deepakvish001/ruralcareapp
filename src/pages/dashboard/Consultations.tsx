@@ -211,7 +211,7 @@ export default function Consultations() {
   return (
     <div className="space-y-4 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
-      <h2 className="text-xl font-bold text-foreground">{t('consultations.title')}</h2>
+      <h2 className="text-xl font-bold text-foreground">{t('consultations.title')}{isCached ? ' (cached)' : ''}</h2>
 
       <div className="flex gap-2">
         <div className="relative flex-1">
