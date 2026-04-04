@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Heart, MapPin, Phone, Video } from 'lucide-react';
+import { Stethoscope, Heart, MapPin, Phone, Video, Pill } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import illustSymptoms from '@/assets/illust-symptoms.png';
 import illustFirstaid from '@/assets/illust-firstaid.png';
