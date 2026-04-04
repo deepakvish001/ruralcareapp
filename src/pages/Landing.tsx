@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Heart, Shield, Stethoscope, Phone, Video, ArrowRight, Check, ChevronRight, Activity, Users, Building2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import heroImage from '@/assets/hero-healthcare.jpg';
 
 export default function Landing() {
   const { t } = useApp();
