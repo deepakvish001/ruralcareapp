@@ -47,9 +47,9 @@ export default function Medications() {
   const [timeSlots, setTimeSlots] = useState<string[]>(['08:00']);
   const [notes, setNotes] = useState('');
 
-  const { data: medications = [], isLoading } = useQuery({
-    queryKey: ['medications', user?.id],
-    queryFn: async () => {
+  const { data: medications = [], isLoading } = useOfflineCache<Medication[]>(
+    ['medications', user?.id || ''],
+    async () => {
       const { data, error } = await supabase
         .from('medications')
         .select('*')
@@ -57,8 +57,8 @@ export default function Medications() {
       if (error) throw error;
       return data as Medication[];
     },
-    enabled: !!user,
-  });
+    { enabled: !!user },
+  );
 
   const { data: todayLogs = [] } = useQuery({
     queryKey: ['medication-logs-today', user?.id],
