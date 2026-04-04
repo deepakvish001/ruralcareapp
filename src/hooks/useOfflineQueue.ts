@@ -50,22 +50,22 @@ function dequeue(id: string) {
 async function processAction(action: QueuedAction): Promise<boolean> {
   try {
     if (action.type === 'insert') {
-      const { error } = await supabase.from(action.table).insert(action.payload as any);
+      const { error } = await (supabase as any).from(action.table).insert(action.payload);
       if (error) throw error;
     } else if (action.type === 'update') {
-      let query = supabase.from(action.table).update(action.payload as any);
+      let query = (supabase as any).from(action.table).update(action.payload);
       if (action.match) {
         for (const [col, val] of Object.entries(action.match)) {
-          query = query.eq(col, val as any);
+          query = query.eq(col, val);
         }
       }
       const { error } = await query;
       if (error) throw error;
     } else if (action.type === 'delete') {
-      let query = supabase.from(action.table).delete();
+      let query = (supabase as any).from(action.table).delete();
       if (action.match) {
         for (const [col, val] of Object.entries(action.match)) {
-          query = query.eq(col, val as any);
+          query = query.eq(col, val);
         }
       }
       const { error } = await query;
