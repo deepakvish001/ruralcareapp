@@ -205,6 +205,8 @@ const translations: Record<Language, Record<string, string>> = {
     'telemedicine.submit': 'Submit Request',
     'videoCall.inProgress': 'Call in Progress',
     'videoCall.futureUpdate': 'Video calling will be available in a future update',
+    'nav.appointments': 'Appointments',
+    'appointments.title': 'Appointments',
   },
   hi: {
     'app.name': 'RuralCare',
