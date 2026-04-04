@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
+import { useMedicationReminders } from '@/hooks/useMedicationReminders';
 
 const frequencyOptions = ['Once daily', 'Twice daily', 'Three times daily', 'Every 8 hours', 'As needed'];
 
