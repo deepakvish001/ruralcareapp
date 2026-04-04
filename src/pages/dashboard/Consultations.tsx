@@ -22,6 +22,8 @@ export default function Consultations() {
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
 
   const { data: patients = [] } = useQuery({
     queryKey: ['patients-list'],
