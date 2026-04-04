@@ -35,7 +35,8 @@ export default function Medications() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [tab, setTab] = useState<'active' | 'history'>('active');
+  const [tab, setTab] = useState<'active' | 'history' | 'adherence'>('active');
+  const [adherenceRange, setAdherenceRange] = useState<'week' | 'month'>('week');
   const [remindersEnabled, setRemindersEnabled] = useState(() => localStorage.getItem('med-reminders') === 'true');
 
   // Form state
