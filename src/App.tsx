@@ -26,6 +26,7 @@ import Settings from "./pages/dashboard/Settings";
 import VideoCall from "./pages/dashboard/VideoCall";
 import Appointments from "./pages/dashboard/Appointments";
 import Medications from "./pages/dashboard/Medications";
+import SyncStatus from "./pages/dashboard/SyncStatus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
