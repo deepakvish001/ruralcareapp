@@ -3,11 +3,12 @@ import { Language, t as translate } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
-export type UserRole = 'patient' | 'healthWorker' | 'doctor';
+export type UserRole = 'patient' | 'healthWorker' | 'doctor' | 'admin';
 
 interface AppContextType {
   role: UserRole | null;
   setRole: (role: UserRole | null) => void;
+  isAdmin: boolean;
   language: Language;
   setLanguage: (lang: Language) => void;
   darkMode: boolean;
