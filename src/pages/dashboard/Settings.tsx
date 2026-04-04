@@ -1,11 +1,16 @@
-import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut } from 'lucide-react';
+import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, UserRole } from '@/contexts/AppContext';
 import { Language, languageNames } from '@/i18n/translations';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function Settings() {
   const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const languages: Language[] = ['en', 'hi', 'ta', 'te', 'bn'];
   const roles: { key: UserRole; label: string }[] = [
@@ -13,6 +18,68 @@ export default function Settings() {
     { key: 'healthWorker', label: t('role.healthWorker') },
     { key: 'doctor', label: t('role.doctor') },
   ];
+
+  // Doctor profile management
+  const { data: doctorProfile, isLoading: loadingProfile } = useQuery({
+    queryKey: ['doctor-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && role === 'doctor',
+  });
+
+  const [doctorForm, setDoctorForm] = useState({
+    name: '',
+    specialty: '',
+    facility_type: 'PHC',
+    location: '',
+    phone: '',
+    available: true,
+  });
+
+  useEffect(() => {
+    if (doctorProfile) {
+      setDoctorForm({
+        name: doctorProfile.name || '',
+        specialty: doctorProfile.specialty || '',
+        facility_type: doctorProfile.facility_type || 'PHC',
+        location: doctorProfile.location || '',
+        phone: doctorProfile.phone || '',
+        available: doctorProfile.available ?? true,
+      });
+    }
+  }, [doctorProfile]);
+
+  const saveDoctorProfile = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Not authenticated');
+      if (doctorProfile) {
+        const { error } = await supabase
+          .from('doctors')
+          .update({ ...doctorForm })
+          .eq('id', doctorProfile.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('doctors')
+          .insert({ ...doctorForm, user_id: user.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doctor-profile', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
+      toast.success('Doctor profile saved!');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -36,6 +103,75 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Doctor Profile Management */}
+      {role === 'doctor' && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <div className="flex items-center gap-2 mb-3">
+            <Stethoscope className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Doctor Profile</h3>
+          </div>
+          {loadingProfile ? (
+            <div className="text-center py-4 text-muted-foreground text-sm">Loading...</div>
+          ) : (
+            <div className="space-y-3">
+              <input
+                placeholder="Full Name"
+                value={doctorForm.name}
+                onChange={(e) => setDoctorForm({ ...doctorForm, name: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <input
+                placeholder="Specialty (e.g. General Medicine)"
+                value={doctorForm.specialty}
+                onChange={(e) => setDoctorForm({ ...doctorForm, specialty: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={doctorForm.facility_type}
+                  onChange={(e) => setDoctorForm({ ...doctorForm, facility_type: e.target.value })}
+                  className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground"
+                >
+                  <option value="PHC">PHC</option>
+                  <option value="District Hospital">District Hospital</option>
+                  <option value="Private Clinic">Private Clinic</option>
+                  <option value="Community Health Center">CHC</option>
+                </select>
+                <input
+                  placeholder="Location / Distance"
+                  value={doctorForm.location}
+                  onChange={(e) => setDoctorForm({ ...doctorForm, location: e.target.value })}
+                  className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <input
+                placeholder="Phone number"
+                value={doctorForm.phone}
+                onChange={(e) => setDoctorForm({ ...doctorForm, phone: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Available for consultations</span>
+                <button
+                  onClick={() => setDoctorForm({ ...doctorForm, available: !doctorForm.available })}
+                  className={`relative h-7 w-12 rounded-full transition-colors ${doctorForm.available ? 'bg-success' : 'bg-muted'}`}
+                >
+                  <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform ${doctorForm.available ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+              <button
+                onClick={() => saveDoctorProfile.mutate()}
+                disabled={!doctorForm.name || !doctorForm.specialty || saveDoctorProfile.isPending}
+                className="w-full flex items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {saveDoctorProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {doctorProfile ? 'Update Profile' : 'Create Profile'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
