@@ -56,7 +56,7 @@ export default function Consultations() {
     mutationFn: async () => {
       const consultation = consultations.find((c) => c.id === activeChat);
       if (!consultation) return;
-      const currentMessages = (consultation.messages as ChatMessage[]) || [];
+      const currentMessages = (consultation.messages as unknown as ChatMessage[]) || [];
       const newMsg: ChatMessage = {
         id: Date.now().toString(),
         text: message,
@@ -65,7 +65,7 @@ export default function Consultations() {
       };
       const { error } = await supabase
         .from('consultations')
-        .update({ messages: [...currentMessages, newMsg] })
+        .update({ messages: ([...currentMessages, newMsg] as unknown as any) })
         .eq('id', activeChat);
       if (error) throw error;
     },
@@ -78,7 +78,7 @@ export default function Consultations() {
   const activeConsultation = consultations.find((c) => c.id === activeChat);
 
   if (activeChat && activeConsultation) {
-    const messages = (activeConsultation.messages as ChatMessage[]) || [];
+    const messages = (activeConsultation.messages as unknown as ChatMessage[]) || [];
     return (
       <div className="flex flex-col h-[calc(100vh-180px)] animate-fade-in-up">
         <div className="flex items-center gap-3 pb-3 border-b border-border">
@@ -128,7 +128,7 @@ export default function Consultations() {
       ) : (
         <div className="space-y-3">
           {consultations.map((c) => {
-            const msgs = (c.messages as ChatMessage[]) || [];
+            const msgs = (c.messages as unknown as ChatMessage[]) || [];
             const lastMsg = msgs[msgs.length - 1];
             return (
               <button key={c.id} onClick={() => setActiveChat(c.id)} className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card text-left">
