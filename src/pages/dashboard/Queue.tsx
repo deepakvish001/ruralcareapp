@@ -1,9 +1,11 @@
-import { ArrowLeft, AlertTriangle, Clock, Plus } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Clock, Plus, CloudOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 
 const priorityConfig = {
@@ -16,13 +18,14 @@ export default function Queue() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ patient_name: '', patient_age: '', symptoms: '', priority: 'medium' as string });
 
-  const { data: queue = [], isLoading } = useQuery({
-    queryKey: ['queue'],
-    queryFn: async () => {
+  const { data: queue = [], isLoading, isCached } = useOfflineCache(
+    ['queue'],
+    async () => {
       const { data, error } = await supabase
         .from('queue_entries')
         .select('*')
@@ -31,24 +34,29 @@ export default function Queue() {
       if (error) throw error;
       return data;
     },
-  });
+  );
 
   const addEntry = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('queue_entries').insert({
+      const payload = {
         patient_name: form.patient_name,
         patient_age: parseInt(form.patient_age) || null,
         symptoms: form.symptoms,
         priority: form.priority,
         doctor_id: user?.id || null,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'queue_entries', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('queue_entries').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['queue'] });
       setShowForm(false);
       setForm({ patient_name: '', patient_age: '', symptoms: '', priority: 'medium' });
-      toast.success('Patient added to queue');
+      if (navigator.onLine) toast.success('Patient added to queue');
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -71,8 +79,15 @@ export default function Queue() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">{t('queue.title')}</h2>
-        <span className="text-sm text-muted-foreground">{filtered.length} {t('queue.waiting').toLowerCase()}</span>
+        <span className="text-sm text-muted-foreground">{filtered.length} {t('queue.waiting').toLowerCase()}{isCached ? ' (cached)' : ''}</span>
       </div>
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <CloudOff className="h-3.5 w-3.5" />
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
       <div className="flex gap-2">
         {(['all', 'high', 'medium', 'low'] as const).map((key) => (
           <button key={key} onClick={() => setFilter(key)}

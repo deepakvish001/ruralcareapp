@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Plus, Search, Filter, X } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Filter, X, CloudOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { toast } from 'sonner';
 
 interface Patient {
@@ -22,6 +23,7 @@ export default function Patients() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -47,7 +49,7 @@ export default function Patients() {
 
   const addPatient = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('patients').insert({
+      const payload = {
         name: form.name,
         age: parseInt(form.age) || 0,
         gender: form.gender,
@@ -55,14 +57,19 @@ export default function Patients() {
         phone: form.phone || null,
         conditions: form.conditions ? form.conditions.split(',').map((c) => c.trim()) : [],
         registered_by: user?.id,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'patients', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('patients').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       setShowForm(false);
       setForm({ name: '', age: '', gender: 'male', village: '', phone: '', conditions: '' });
-      toast.success(t('patients.saved') || 'Patient registered!');
+      if (navigator.onLine) toast.success(t('patients.saved') || 'Patient registered!');
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -109,6 +116,14 @@ export default function Patients() {
         <h2 className="text-xl font-bold text-foreground">{t('patients.title')}</h2>
         <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}{isCached ? ' (cached)' : ''}</span>
       </div>
+
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <CloudOff className="h-3.5 w-3.5" />
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
 
       <div className="flex gap-2">
         <div className="relative flex-1">
