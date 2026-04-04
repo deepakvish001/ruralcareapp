@@ -57,6 +57,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setRoleState(profile.role as UserRole);
                 localStorage.setItem('ruralcare_role', profile.role);
               }
+              // Check admin status
+              const { data: adminRole } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', newSession.user.id)
+                .eq('role', 'admin')
+                .maybeSingle();
+              setIsAdmin(!!adminRole);
             } catch (e) {
               console.error('Failed to fetch profile role:', e);
             }
