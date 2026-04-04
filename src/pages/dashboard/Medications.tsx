@@ -124,7 +124,7 @@ export default function Medications() {
     return totalExpected > 0 ? Math.round((totalTaken / totalExpected) * 100) : 0;
   }, [adherenceData]);
 
-
+  const createMedication = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('medications').insert({
         user_id: user!.id,
