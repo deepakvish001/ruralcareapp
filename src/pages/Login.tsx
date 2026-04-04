@@ -54,9 +54,7 @@ export default function Login() {
               onClick={() => handleSelect(r.key)}
               className={`w-full flex items-center gap-4 rounded-xl border border-border ${r.color} border-l-4 bg-card p-5 shadow-card transition-all hover:shadow-elevated hover:-translate-y-0.5`}
             >
-              <div className={`rounded-lg p-3 ${r.accent}`}>
-                <r.icon className="h-6 w-6" />
-              </div>
+              <img src={roleImages[r.key]} alt={r.key} className="h-14 w-14 object-contain" loading="lazy" width={56} height={56} />
               <div className="text-left flex-1">
                 <h3 className="font-semibold text-foreground">{t(`role.${r.key}`)}</h3>
                 <p className="text-sm text-muted-foreground">{t(`role.${r.key}.desc`)}</p>
