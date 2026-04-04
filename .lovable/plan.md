@@ -1,106 +1,78 @@
 
 
-# RuralCare — Next Features Plan
+# RuralCare — Next Features Plan (Phase 2)
 
 ## Overview
-Seven features to add, including PWA offline support, to make RuralCare production-ready for rural healthcare delivery.
+Five features to strengthen clinical workflows, improve data-driven insights, and enhance the user experience.
 
 ---
 
-## Feature 1: PWA Offline Support
+## Feature 1: Real-Time Reports Dashboard
 
-**What**: Make the app installable and functional offline — critical for rural areas with poor connectivity.
+**What**: Replace hardcoded stats in `Reports.tsx` with live data from the database — actual visit counts, follow-ups due, and trend charts based on real records.
 
 **Steps**:
-- Install `vite-plugin-pwa` and configure in `vite.config.ts` with `devOptions: { enabled: false }`, `navigateFallbackDenylist: [/^\/~oauth/]`
-- Create `public/manifest.json` with app name, theme colors, icons
-- Generate PWA icons (192x192, 512x512) in `/public`
-- Add iframe/preview guard in `src/main.tsx` to prevent service worker registration in Lovable preview
-- Pre-cache static assets (first aid guides, symptom checker data, emergency contacts) so they work offline
-- Add an offline indicator banner component that shows when `navigator.onLine` is false
-- Create an `/install` page with install prompt instructions
-
-**Key constraint**: Service worker only activates in production builds. Offline features (first aid, emergency, symptom checker) use local data already, so they'll work naturally. Database-dependent pages (patients, consultations) will show a "You're offline" message.
+- Query `visits` table grouped by `type` for the visit breakdown chart
+- Query `visits` grouped by month for the trend chart
+- Count visits with `follow_up_date` in the next 7 days for "follow-ups due"
+- Count visits in the current month for "visits this month"
+- All data fetched via React Query; no new tables needed
 
 ---
 
-## Feature 2: AI-Powered Symptom Analysis
+## Feature 2: Consultation Chat with Patient View
 
-**What**: Replace the static weight-based symptom checker with an AI model that provides more nuanced assessments.
+**What**: Let patients see and respond to their consultations (currently only doctors can chat). Link consultations to patient accounts via `patient_user_id`.
 
 **Steps**:
-- Create a backend function that calls a Lovable AI supported model (e.g., `google/gemini-2.5-flash`) with selected symptoms
-- Return structured JSON with severity, possible conditions, and recommended actions
-- Update `SymptomChecker.tsx` to call the function and display AI results
-- Keep the offline fallback using the existing weight-based logic
+- In `Consultations.tsx`, when role is `patient`, query consultations where `patient_user_id = user.id`
+- Allow patients to send messages (append to the `messages` JSON array)
+- Show patient-side consultation list with doctor name (join `doctors` table)
+- Add realtime subscription so both sides see new messages instantly
 
 ---
 
-## Feature 3: Doctors Table in Database
+## Feature 3: Telemedicine Improvement — Doctor Assignment & Video Placeholder
 
-**What**: Move the hardcoded doctor list (`FindDoctor.tsx`) to the database so it's dynamic.
+**What**: Fix the placeholder `doctor_id` in telemedicine requests. Let patients pick a doctor, and add a "Join Call" button that links to a video placeholder.
 
 **Steps**:
-- Create a `doctors` table with columns: `id`, `user_id`, `name`, `specialty`, `facility_type`, `location`, `phone`, `available`, `latitude`, `longitude`
-- Add RLS policies (authenticated can view, doctors can update own)
-- Seed with initial data
-- Update `FindDoctor.tsx` to query from the database with search/filter
+- In the telemedicine request form, add a doctor selector (query available doctors)
+- Store the selected `doctor_id` and `patient_id` on the consultation
+- Add a "Join Call" button on active consultations that opens a placeholder video room page
+- Create a simple `/dashboard/video-call/:consultationId` page with camera/mic permission prompts and a "call in progress" UI
 
 ---
 
-## Feature 4: Visit Recording for Health Workers
+## Feature 4: Patient Medical History Export
 
-**What**: Let health workers record vitals and notes during patient visits from the Scheduler page.
+**What**: Let health workers or doctors export a patient's visit history as a downloadable PDF summary — useful for referrals to hospitals.
 
 **Steps**:
-- Add a "Record Visit" button on the Scheduler page for each scheduled item
-- Create a form with fields: weight, temperature, blood pressure, notes, follow-up date
-- Insert into the existing `visits` table on submission
-- Show visit history on the patient detail view
+- Add an "Export" button on the `PatientDetail` page
+- Generate a PDF client-side (using `jspdf` or `html2canvas`) with patient info, visit history, conditions, and referrals
+- Include a header with the app name and date generated
+- Download the file directly in the browser
 
 ---
 
-## Feature 5: Patient Detail Page
+## Feature 5: Multi-Language Content Expansion
 
-**What**: A dedicated page showing a patient's full profile, visit history, and consultations.
-
-**Steps**:
-- Create `/dashboard/patients/:id` route and `PatientDetail.tsx`
-- Fetch patient info, visits (joined), consultations, and referrals
-- Display in tabbed sections: Overview, Visits, Consultations
-- Link from patient cards in `Patients.tsx`
-
----
-
-## Feature 6: Notification System
-
-**What**: In-app notifications for follow-up reminders, consultation updates, and queue status.
+**What**: The app has an i18n system but translations may be incomplete. Audit and complete translations for Hindi and the existing languages.
 
 **Steps**:
-- Create a `notifications` table (`id`, `user_id`, `title`, `body`, `read`, `type`, `created_at`)
-- Add RLS (users see own notifications)
-- Create a bell icon in the dashboard header with unread count badge
-- Use Supabase Realtime to push new notifications
-- Trigger notifications via database triggers (e.g., when a referral status changes)
-
----
-
-## Feature 7: Password Reset Flow
-
-**What**: Add forgot password functionality to the login page.
-
-**Steps**:
-- Add "Forgot Password?" link on `Login.tsx`
-- Call `supabase.auth.resetPasswordForEmail()` with a redirect URL
-- Create `/reset-password` page that calls `supabase.auth.updateUser()` with the new password
-- Add route in `App.tsx`
+- Audit `src/i18n/translations.ts` for missing keys across all pages
+- Add translations for new features (notifications, doctor profile, patient detail tabs)
+- Add a language indicator in the header or settings showing the current language
+- Ensure all user-facing strings use `t()` — no hardcoded English in components
 
 ---
 
 ## Technical Notes
 
-- PWA icons will be simple generated images matching the app's primary color
-- AI symptom analysis uses an edge function with Lovable AI — no API key needed
-- All new tables include RLS policies and require authentication
-- Offline-capable pages (first aid, emergency, symptoms) use local/cached data; database pages gracefully degrade
+- No new database tables required (Feature 3's video page is client-side only)
+- Feature 1 uses aggregate queries on existing `visits` and `patients` tables
+- Feature 2 adds realtime to `consultations` (ALTER PUBLICATION)
+- Feature 4 adds a client-side dependency (`jspdf`) — no backend changes
+- Feature 5 is a content-only change in the translations file
 
