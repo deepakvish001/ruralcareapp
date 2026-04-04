@@ -18,13 +18,14 @@ export default function Queue() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ patient_name: '', patient_age: '', symptoms: '', priority: 'medium' as string });
 
-  const { data: queue = [], isLoading } = useQuery({
-    queryKey: ['queue'],
-    queryFn: async () => {
+  const { data: queue = [], isLoading, isCached } = useOfflineCache(
+    ['queue'],
+    async () => {
       const { data, error } = await supabase
         .from('queue_entries')
         .select('*')
@@ -33,24 +34,29 @@ export default function Queue() {
       if (error) throw error;
       return data;
     },
-  });
+  );
 
   const addEntry = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('queue_entries').insert({
+      const payload = {
         patient_name: form.patient_name,
         patient_age: parseInt(form.patient_age) || null,
         symptoms: form.symptoms,
         priority: form.priority,
         doctor_id: user?.id || null,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'queue_entries', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('queue_entries').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['queue'] });
       setShowForm(false);
       setForm({ patient_name: '', patient_age: '', symptoms: '', priority: 'medium' });
-      toast.success('Patient added to queue');
+      if (navigator.onLine) toast.success('Patient added to queue');
     },
     onError: (err: any) => toast.error(err.message),
   });

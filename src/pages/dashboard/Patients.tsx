@@ -117,6 +117,14 @@ export default function Patients() {
         <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}{isCached ? ' (cached)' : ''}</span>
       </div>
 
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <CloudOff className="h-3.5 w-3.5" />
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
+
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
