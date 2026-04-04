@@ -1,6 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { User, Heart, Stethoscope, Activity } from 'lucide-react';
 import { useApp, UserRole } from '@/contexts/AppContext';
+import rolePatientImg from '@/assets/role-patient.png';
+import roleHealthworkerImg from '@/assets/role-healthworker.png';
+import roleDoctorImg from '@/assets/role-doctor.png';
+
+const roleImages: Record<UserRole, string> = {
+  patient: rolePatientImg,
+  healthWorker: roleHealthworkerImg,
+  doctor: roleDoctorImg,
+};
 
 const roles: { key: UserRole; icon: React.ElementType; color: string; accent: string }[] = [
   { key: 'patient', icon: User, color: 'border-l-primary', accent: 'bg-primary/10 text-primary' },
@@ -45,9 +54,7 @@ export default function Login() {
               onClick={() => handleSelect(r.key)}
               className={`w-full flex items-center gap-4 rounded-xl border border-border ${r.color} border-l-4 bg-card p-5 shadow-card transition-all hover:shadow-elevated hover:-translate-y-0.5`}
             >
-              <div className={`rounded-lg p-3 ${r.accent}`}>
-                <r.icon className="h-6 w-6" />
-              </div>
+              <img src={roleImages[r.key]} alt={r.key} className="h-14 w-14 object-contain" loading="lazy" width={56} height={56} />
               <div className="text-left flex-1">
                 <h3 className="font-semibold text-foreground">{t(`role.${r.key}`)}</h3>
                 <p className="text-sm text-muted-foreground">{t(`role.${r.key}.desc`)}</p>

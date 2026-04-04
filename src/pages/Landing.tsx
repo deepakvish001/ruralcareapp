@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Heart, Shield, Stethoscope, Phone, Video, ArrowRight, Check, ChevronRight, Activity, Users, Building2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import heroImage from '@/assets/hero-healthcare.jpg';
 
 export default function Landing() {
   const { t } = useApp();
@@ -89,22 +90,10 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Floating dashboard mockup */}
+          {/* Hero Image */}
           <div className="mt-16 animate-fade-in-up-delay-2">
-            <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-elevated animate-float">
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { label: 'Active Patients', value: '1,247', change: '+12%' },
-                  { label: 'Consultations Today', value: '38', change: '+5%' },
-                  { label: 'Follow-ups Due', value: '15', change: '-3%' },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl bg-muted p-4 text-center">
-                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                    <span className="text-xs text-success font-medium">{stat.change}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="mx-auto max-w-4xl rounded-2xl overflow-hidden shadow-elevated animate-float">
+              <img src={heroImage} alt="ASHA health worker helping villagers in rural India" width={1920} height={1024} className="w-full h-auto" />
             </div>
           </div>
         </div>
