@@ -24,6 +24,7 @@ import Referrals from "./pages/dashboard/Referrals";
 import Telemedicine from "./pages/dashboard/Telemedicine";
 import Settings from "./pages/dashboard/Settings";
 import VideoCall from "./pages/dashboard/VideoCall";
+import Appointments from "./pages/dashboard/Appointments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
