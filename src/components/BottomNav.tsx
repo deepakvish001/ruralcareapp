@@ -8,7 +8,7 @@ interface NavItem {
   path: string;
 }
 
-const navItems: Record<UserRole, NavItem[]> = {
+const navItems: Partial<Record<UserRole, NavItem[]>> = {
   patient: [
     { icon: Home, labelKey: 'nav.home', path: '/dashboard' },
     { icon: Stethoscope, labelKey: 'nav.symptoms', path: '/dashboard/symptoms' },
@@ -26,6 +26,10 @@ const navItems: Record<UserRole, NavItem[]> = {
     { icon: ListOrdered, labelKey: 'nav.queue', path: '/dashboard/queue' },
     { icon: MessageSquare, labelKey: 'nav.consultations', path: '/dashboard/consultations' },
     { icon: GitBranch, labelKey: 'nav.referrals', path: '/dashboard/referrals' },
+  ],
+  admin: [
+    { icon: Home, labelKey: 'nav.home', path: '/dashboard' },
+    { icon: Settings, labelKey: 'nav.admin', path: '/dashboard/admin' },
   ],
 };
 

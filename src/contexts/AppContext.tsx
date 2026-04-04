@@ -123,7 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const t = (key: string) => translate(key, language);
 
   return (
-    <AppContext.Provider value={{ role, setRole, language, setLanguage, darkMode, setDarkMode, t, user, session, loading, signOut }}>
+    <AppContext.Provider value={{ role, setRole, isAdmin, language, setLanguage, darkMode, setDarkMode, t, user, session, loading, signOut }}>
       {children}
     </AppContext.Provider>
   );

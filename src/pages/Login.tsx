@@ -8,7 +8,7 @@ import rolePatientImg from '@/assets/role-patient.png';
 import roleHealthworkerImg from '@/assets/role-healthworker.png';
 import roleDoctorImg from '@/assets/role-doctor.png';
 
-const roleImages: Record<UserRole, string> = {
+const roleImages: Partial<Record<UserRole, string>> = {
   patient: rolePatientImg,
   healthWorker: roleHealthworkerImg,
   doctor: roleDoctorImg,
