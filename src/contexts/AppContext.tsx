@@ -35,46 +35,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem('ruralcare_dark') === 'true';
   });
 
-  // Auth state listener — set up BEFORE getSession per Supabase best practice
   useEffect(() => {
+    // Set up auth listener BEFORE getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
 
-        // Fetch profile role if logged in
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .single();
-          if (profile?.role) {
-            setRoleState(profile.role as UserRole);
-            localStorage.setItem('ruralcare_role', profile.role);
-          }
+        if (newSession?.user) {
+          // Use setTimeout to avoid potential Supabase client deadlock
+          setTimeout(async () => {
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('user_id', newSession.user.id)
+                .single();
+              if (profile?.role) {
+                setRoleState(profile.role as UserRole);
+                localStorage.setItem('ruralcare_role', profile.role);
+              }
+            } catch (e) {
+              console.error('Failed to fetch profile role:', e);
+            }
+            setLoading(false);
+          }, 0);
+        } else {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
     // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (!session) setLoading(false);
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      if (!existingSession) setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const setRole = async (role: UserRole | null) => {
-    setRoleState(role);
-    if (role) {
-      localStorage.setItem('ruralcare_role', role);
-      // Persist to profile in DB
+  const setRole = async (newRole: UserRole | null) => {
+    setRoleState(newRole);
+    if (newRole) {
+      localStorage.setItem('ruralcare_role', newRole);
       if (user) {
-        await supabase.from('profiles').update({ role }).eq('user_id', user.id);
+        try {
+          await supabase.from('profiles').update({ role: newRole }).eq('user_id', user.id);
+        } catch (e) {
+          console.error('Failed to update profile role:', e);
+        }
       }
     } else {
       localStorage.removeItem('ruralcare_role');
