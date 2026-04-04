@@ -26,7 +26,7 @@ export function readQueue(): QueuedAction[] {
   }
 }
 
-function writeQueue(queue: QueuedAction[]) {
+export function writeQueue(queue: QueuedAction[]) {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 }
 
