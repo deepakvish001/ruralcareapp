@@ -2,25 +2,25 @@ import { ArrowLeft, Users, Calendar, Activity, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Reports() {
   const { t } = useApp();
   const navigate = useNavigate();
 
-  const { data: patientCount = 0 } = useQuery({
-    queryKey: ['patients-count'],
-    queryFn: async () => {
+  const { data: patientCount = 0, isCached: cachedPatients } = useOfflineCache<number>(
+    ['patients-count'],
+    async () => {
       const { count, error } = await supabase.from('patients').select('*', { count: 'exact', head: true });
       if (error) throw error;
       return count || 0;
     },
-  });
+  );
 
-  const { data: visitsThisMonth = 0 } = useQuery({
-    queryKey: ['visits-this-month'],
-    queryFn: async () => {
+  const { data: visitsThisMonth = 0, isCached: cachedVisits } = useOfflineCache<number>(
+    ['visits-this-month'],
+    async () => {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const { count, error } = await supabase
@@ -30,11 +30,11 @@ export default function Reports() {
       if (error) throw error;
       return count || 0;
     },
-  });
+  );
 
-  const { data: vaccinationCount = 0 } = useQuery({
-    queryKey: ['vaccinations-count'],
-    queryFn: async () => {
+  const { data: vaccinationCount = 0 } = useOfflineCache<number>(
+    ['vaccinations-count'],
+    async () => {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const { count, error } = await supabase
@@ -45,11 +45,11 @@ export default function Reports() {
       if (error) throw error;
       return count || 0;
     },
-  });
+  );
 
-  const { data: followUpsDue = 0 } = useQuery({
-    queryKey: ['followups-due'],
-    queryFn: async () => {
+  const { data: followUpsDue = 0 } = useOfflineCache<number>(
+    ['followups-due'],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
       const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
       const { count, error } = await supabase
@@ -60,11 +60,11 @@ export default function Reports() {
       if (error) throw error;
       return count || 0;
     },
-  });
+  );
 
-  const { data: visitsByType = [] } = useQuery({
-    queryKey: ['visits-by-type'],
-    queryFn: async () => {
+  const { data: visitsByType = [] } = useOfflineCache<{ name: string; count: number }[]>(
+    ['visits-by-type'],
+    async () => {
       const { data, error } = await supabase.from('visits').select('type');
       if (error) throw error;
       const counts: Record<string, number> = {};
@@ -73,11 +73,11 @@ export default function Reports() {
       });
       return Object.entries(counts).map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }));
     },
-  });
+  );
 
-  const { data: trendData = [] } = useQuery({
-    queryKey: ['patient-trend'],
-    queryFn: async () => {
+  const { data: trendData = [] } = useOfflineCache<{ month: string; visits: number }[]>(
+    ['patient-trend'],
+    async () => {
       const { data, error } = await supabase.from('visits').select('date');
       if (error) throw error;
       const months: Record<string, number> = {};
@@ -94,7 +94,9 @@ export default function Reports() {
         .slice(-6)
         .map(([month, visits]) => ({ month, visits }));
     },
-  });
+  );
+
+  const anyCached = cachedPatients || cachedVisits;
 
   const stats = [
     { icon: Users, label: t('reports.totalPatients'), value: patientCount.toString(), color: 'text-primary' },
@@ -106,7 +108,7 @@ export default function Reports() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
-      <h2 className="text-xl font-bold text-foreground">{t('reports.title')}</h2>
+      <h2 className="text-xl font-bold text-foreground">{t('reports.title')}{anyCached ? ' (cached)' : ''}</h2>
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-4 shadow-card">
