@@ -79,8 +79,15 @@ export default function Queue() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">{t('queue.title')}</h2>
-        <span className="text-sm text-muted-foreground">{filtered.length} {t('queue.waiting').toLowerCase()}</span>
+        <span className="text-sm text-muted-foreground">{filtered.length} {t('queue.waiting').toLowerCase()}{isCached ? ' (cached)' : ''}</span>
       </div>
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning-foreground">
+          <CloudOff className="h-3.5 w-3.5" />
+          <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+          {pendingCount} action{pendingCount > 1 ? 's' : ''} pending sync
+        </div>
+      )}
       <div className="flex gap-2">
         {(['all', 'high', 'medium', 'low'] as const).map((key) => (
           <button key={key} onClick={() => setFilter(key)}
