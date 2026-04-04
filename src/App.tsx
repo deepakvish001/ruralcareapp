@@ -4,8 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
+import OfflineBanner from "@/components/OfflineBanner";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import DashboardLayout from "./pages/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import SymptomChecker from "./pages/dashboard/SymptomChecker";
@@ -13,6 +15,7 @@ import FirstAid from "./pages/dashboard/FirstAid";
 import Emergency from "./pages/dashboard/Emergency";
 import FindDoctor from "./pages/dashboard/FindDoctor";
 import Patients from "./pages/dashboard/Patients";
+import PatientDetail from "./pages/dashboard/PatientDetail";
 import Scheduler from "./pages/dashboard/Scheduler";
 import Reports from "./pages/dashboard/Reports";
 import Queue from "./pages/dashboard/Queue";
@@ -28,12 +31,14 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppProvider>
       <TooltipProvider>
+        <OfflineBanner />
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<DashboardHome />} />
               <Route path="symptoms" element={<SymptomChecker />} />
@@ -41,6 +46,7 @@ const App = () => (
               <Route path="emergency" element={<Emergency />} />
               <Route path="find-doctor" element={<FindDoctor />} />
               <Route path="patients" element={<Patients />} />
+              <Route path="patients/:id" element={<PatientDetail />} />
               <Route path="scheduler" element={<Scheduler />} />
               <Route path="reports" element={<Reports />} />
               <Route path="queue" element={<Queue />} />

@@ -55,6 +55,81 @@ export type Database = {
           },
         ]
       }
+      doctors: {
+        Row: {
+          available: boolean
+          created_at: string
+          facility_type: string
+          id: string
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          name: string
+          phone: string | null
+          specialty: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          available?: boolean
+          created_at?: string
+          facility_type?: string
+          id?: string
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          specialty: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          available?: boolean
+          created_at?: string
+          facility_type?: string
+          id?: string
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          specialty?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           age: number

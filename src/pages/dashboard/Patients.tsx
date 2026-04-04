@@ -83,7 +83,7 @@ export default function Patients() {
       ) : (
         <div className="space-y-3">
           {filtered.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card">
+            <div key={p.id} onClick={() => navigate(`/dashboard/patients/${p.id}`)} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card cursor-pointer hover:shadow-elevated transition-shadow">
               <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
                 {getInitials(p.name)}
               </div>

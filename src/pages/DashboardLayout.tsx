@@ -4,6 +4,7 @@ import { Settings, LogOut } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import BottomNav from '@/components/BottomNav';
 import SOSButton from '@/components/SOSButton';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function DashboardLayout() {
   const { role, t, user, loading, signOut } = useApp();
@@ -38,6 +39,7 @@ export default function DashboardLayout() {
             <p className="text-xs text-muted-foreground">{t(`role.${role}`)}</p>
           </div>
           <div className="flex items-center gap-1">
+            <NotificationBell />
             <button
               onClick={() => navigate('/dashboard/settings')}
               className="rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors"
