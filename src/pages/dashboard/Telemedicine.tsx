@@ -1,4 +1,4 @@
-import { ArrowLeft, Video, Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { ArrowLeft, Video, Clock, CheckCircle, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
@@ -18,6 +18,17 @@ export default function Telemedicine() {
   const [tab, setTab] = useState<'active' | 'closed'>('active');
   const [showForm, setShowForm] = useState(false);
   const [symptoms, setSymptoms] = useState('');
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+
+  const { data: doctors = [] } = useQuery({
+    queryKey: ['available-doctors'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('doctors').select('id, name, specialty, user_id').eq('available', true);
+      if (error) throw error;
+      return data;
+    },
+    enabled: role === 'patient',
+  });
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['telemedicine'],
@@ -33,10 +44,11 @@ export default function Telemedicine() {
 
   const submitRequest = useMutation({
     mutationFn: async () => {
-      // For patients, create a consultation request
+      const doctor = doctors.find(d => d.id === selectedDoctorId);
+      if (!doctor?.user_id) throw new Error('Please select a doctor');
       const { error } = await supabase.from('consultations').insert({
         patient_user_id: user?.id,
-        doctor_id: user?.id!, // Placeholder — in real app would be assigned
+        doctor_id: doctor.user_id,
         messages: [{ id: Date.now().toString(), text: symptoms, sender: 'patient', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }],
         status: 'active',
       });
@@ -46,6 +58,7 @@ export default function Telemedicine() {
       queryClient.invalidateQueries({ queryKey: ['telemedicine'] });
       setShowForm(false);
       setSymptoms('');
+      setSelectedDoctorId('');
       toast.success('Telemedicine request submitted');
     },
     onError: (err: any) => toast.error(err.message),
@@ -100,11 +113,16 @@ export default function Telemedicine() {
                   </span>
                 </div>
                 {firstMsg && <p className="text-sm text-foreground">{firstMsg.text}</p>}
-                {r.status === 'active' && role === 'doctor' && (
-                  <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex gap-2">
+                  {r.status === 'active' && (
+                    <button onClick={() => navigate(`/dashboard/video-call/${r.id}`)} className="flex-1 rounded-lg border border-primary text-primary py-2 text-xs font-semibold hover:bg-primary/5">
+                      <Video className="h-3 w-3 inline mr-1" /> Join Call
+                    </button>
+                  )}
+                  {r.status === 'active' && role === 'doctor' && (
                     <button onClick={() => updateStatus.mutate({ id: r.id, status: 'closed' })} className="flex-1 rounded-lg gradient-primary py-2 text-xs font-semibold text-primary-foreground">Complete</button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
@@ -121,9 +139,21 @@ export default function Telemedicine() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/40" onClick={() => setShowForm(false)}>
           <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-card p-6 shadow-elevated animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-foreground mb-4">Describe Your Symptoms</h3>
+            <h3 className="text-lg font-bold text-foreground mb-4">Request Teleconsultation</h3>
+            <label className="block text-sm font-medium text-foreground mb-1">Select Doctor</label>
+            <select
+              value={selectedDoctorId}
+              onChange={(e) => setSelectedDoctorId(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none mb-3"
+            >
+              <option value="">Choose a doctor...</option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
+              ))}
+            </select>
+            <label className="block text-sm font-medium text-foreground mb-1">Describe Your Symptoms</label>
             <textarea value={symptoms} onChange={(e) => setSymptoms(e.target.value)} rows={4} placeholder="Describe what you're experiencing..." className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none resize-none" />
-            <button onClick={() => submitRequest.mutate()} disabled={!symptoms.trim() || submitRequest.isPending} className="mt-4 w-full rounded-lg gradient-primary py-3 font-semibold text-primary-foreground disabled:opacity-50">
+            <button onClick={() => submitRequest.mutate()} disabled={!symptoms.trim() || !selectedDoctorId || submitRequest.isPending} className="mt-4 w-full rounded-lg gradient-primary py-3 font-semibold text-primary-foreground disabled:opacity-50">
               {submitRequest.isPending ? '...' : 'Submit Request'}
             </button>
           </div>

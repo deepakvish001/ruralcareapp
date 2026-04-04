@@ -1,9 +1,64 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { toast } from 'sonner';
+
+function generatePdf(patient: any, visits: any[], referrals: any[]) {
+  import('jspdf').then(({ jsPDF }) => {
+    const doc = new jsPDF();
+    let y = 20;
+    doc.setFontSize(18);
+    doc.text('RuralCare — Patient Report', 14, y);
+    y += 8;
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, y);
+    y += 12;
+
+    doc.setFontSize(14);
+    doc.text('Patient Information', 14, y); y += 8;
+    doc.setFontSize(11);
+    doc.text(`Name: ${patient.name}`, 14, y); y += 6;
+    doc.text(`Age: ${patient.age} | Gender: ${patient.gender}`, 14, y); y += 6;
+    if (patient.village) { doc.text(`Village: ${patient.village}`, 14, y); y += 6; }
+    if (patient.phone) { doc.text(`Phone: ${patient.phone}`, 14, y); y += 6; }
+    if (patient.conditions?.length) { doc.text(`Conditions: ${patient.conditions.join(', ')}`, 14, y); y += 6; }
+    y += 6;
+
+    if (visits.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Visit History', 14, y); y += 8;
+      doc.setFontSize(10);
+      visits.forEach((v) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(`${new Date(v.date).toLocaleDateString()} — ${v.type}`, 14, y); y += 5;
+        const details: string[] = [];
+        if (v.weight) details.push(`Weight: ${v.weight}kg`);
+        if (v.temperature) details.push(`Temp: ${v.temperature}°F`);
+        if (v.blood_pressure) details.push(`BP: ${v.blood_pressure}`);
+        if (details.length) { doc.text(`  ${details.join(' | ')}`, 14, y); y += 5; }
+        if (v.notes) { doc.text(`  Notes: ${v.notes}`, 14, y); y += 5; }
+        y += 3;
+      });
+    }
+
+    if (referrals.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(14);
+      doc.text('Referrals', 14, y); y += 8;
+      doc.setFontSize(10);
+      referrals.forEach((r) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(`${r.destination_hospital} — ${r.reason} (${r.status})`, 14, y); y += 6;
+      });
+    }
+
+    doc.save(`${patient.name.replace(/\s+/g, '_')}_report.pdf`);
+    toast.success('PDF downloaded');
+  });
+}
 
 export default function PatientDetail() {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +111,12 @@ export default function PatientDetail() {
 
   return (
     <div className="space-y-4 animate-fade-in-up">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
+        <button onClick={() => generatePdf(patient, visits, referrals)} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+          <Download className="h-3.5 w-3.5" /> Export PDF
+        </button>
+      </div>
 
       <div className="rounded-xl border border-border bg-card p-4 shadow-card">
         <div className="flex items-center gap-3">
