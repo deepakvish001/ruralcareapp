@@ -1,4 +1,4 @@
-import { ArrowLeft, Send, ChevronLeft, Plus, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, ChevronLeft, Plus, X, Trash2, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
@@ -22,6 +22,8 @@ export default function Consultations() {
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
 
   const { data: patients = [] } = useQuery({
     queryKey: ['patients-list'],
@@ -176,11 +178,39 @@ export default function Consultations() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <h2 className="text-xl font-bold text-foreground">{t('consultations.title')}</h2>
 
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by patient name..."
+            className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as any)}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+        >
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Loading...</div>
       ) : (
         <div className="space-y-3">
-          {consultations.map((c) => {
+          {consultations
+            .filter((c) => {
+              const name = ((c as any).patients?.name || '').toLowerCase();
+              const matchesSearch = !searchQuery || name.includes(searchQuery.toLowerCase());
+              const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+              return matchesSearch && matchesStatus;
+            })
+            .map((c) => {
             const msgs = (c.messages as unknown as ChatMessage[]) || [];
             const lastMsg = msgs[msgs.length - 1];
             return (
