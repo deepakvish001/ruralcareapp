@@ -200,9 +200,29 @@ export default function Consultations() {
         </div>
       )}
 
-      <button onClick={() => createConsultation.mutate()} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
-        <Plus className="h-5 w-5" /> New Consultation
-      </button>
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
+          <Plus className="h-5 w-5" /> New Consultation
+        </button>
+      ) : (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm rounded-xl border border-border bg-card p-4 shadow-elevated space-y-3">
+          <h4 className="font-semibold text-foreground text-sm">Select Patient</h4>
+          <select
+            value={selectedPatientId}
+            onChange={(e) => setSelectedPatientId(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">No patient (general)</option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button onClick={() => setShowForm(false)} className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">Cancel</button>
+            <button onClick={() => createConsultation.mutate(selectedPatientId || undefined)} className="flex-1 rounded-lg gradient-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Create</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
