@@ -18,9 +18,9 @@ export default function OfflineBanner() {
   if (!isOffline) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-destructive text-destructive-foreground text-center py-2 text-sm font-medium flex items-center justify-center gap-2">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-destructive text-destructive-foreground text-center py-2 text-sm font-medium flex items-center justify-center gap-2 animate-fade-in-up">
       <WifiOff className="h-4 w-4" />
-      You're offline. Some features may be limited.
+      You're offline — showing saved data. Some features need internet.
     </div>
   );
 }
