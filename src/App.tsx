@@ -23,6 +23,7 @@ import Consultations from "./pages/dashboard/Consultations";
 import Referrals from "./pages/dashboard/Referrals";
 import Telemedicine from "./pages/dashboard/Telemedicine";
 import Settings from "./pages/dashboard/Settings";
+import VideoCall from "./pages/dashboard/VideoCall";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
