@@ -43,10 +43,13 @@ export default function DashboardLayout() {
           </div>
           <div className="flex items-center gap-1">
             {pendingCount > 0 && (
-              <div className="flex items-center gap-1 rounded-full bg-warning/10 border border-warning/30 px-2 py-1 text-[10px] font-medium text-warning-foreground mr-1">
+              <button
+                onClick={() => navigate('/dashboard/sync')}
+                className="flex items-center gap-1 rounded-full bg-warning/10 border border-warning/30 px-2 py-1 text-[10px] font-medium text-warning-foreground mr-1"
+              >
                 <CloudOff className="h-3 w-3" />
                 {pendingCount}
-              </div>
+              </button>
             )}
             <NotificationBell />
             <button

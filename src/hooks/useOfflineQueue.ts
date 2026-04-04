@@ -17,7 +17,7 @@ export interface QueuedAction {
 
 const QUEUE_KEY = 'offline_sync_queue';
 
-function readQueue(): QueuedAction[] {
+export function readQueue(): QueuedAction[] {
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
     return raw ? (JSON.parse(raw) as QueuedAction[]) : [];
@@ -26,7 +26,7 @@ function readQueue(): QueuedAction[] {
   }
 }
 
-function writeQueue(queue: QueuedAction[]) {
+export function writeQueue(queue: QueuedAction[]) {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 }
 
@@ -41,13 +41,13 @@ function enqueue(action: Omit<QueuedAction, 'id' | 'createdAt' | 'retries'>) {
   writeQueue(queue);
 }
 
-function dequeue(id: string) {
+export function dequeue(id: string) {
   writeQueue(readQueue().filter((a) => a.id !== id));
 }
 
 // --- Sync engine ---
 
-async function processAction(action: QueuedAction): Promise<boolean> {
+export async function processAction(action: QueuedAction): Promise<boolean> {
   try {
     if (action.type === 'insert') {
       const { error } = await (supabase as any).from(action.table).insert(action.payload);
