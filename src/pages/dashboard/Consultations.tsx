@@ -23,12 +23,21 @@ export default function Consultations() {
   const [showForm, setShowForm] = useState(false);
   const [newPatientName, setNewPatientName] = useState('');
 
+  const { data: patients = [] } = useQuery({
+    queryKey: ['patients-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('patients').select('id, name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: consultations = [], isLoading } = useQuery({
     queryKey: ['consultations'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('consultations')
-        .select('*')
+        .select('*, patients(name)')
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data;
