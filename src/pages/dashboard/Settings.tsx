@@ -6,6 +6,7 @@ import { Language, languageNames } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 export default function Settings() {
   const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
