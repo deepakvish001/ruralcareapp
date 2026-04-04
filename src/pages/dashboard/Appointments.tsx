@@ -102,6 +102,7 @@ export default function Appointments() {
   const displayed = tab === 'upcoming' ? upcoming : past;
 
   return (
+    <>
     <div className="space-y-4 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <div className="flex items-center gap-2">
