@@ -5,6 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 interface ChatMessage {
   id: string;
@@ -56,16 +57,17 @@ export default function Consultations() {
     mutationFn: async () => {
       const consultation = consultations.find((c) => c.id === activeChat);
       if (!consultation) return;
-      const currentMessages = (consultation.messages as unknown as ChatMessage[]) || [];
+      const currentMessages = (consultation.messages as unknown as ChatMessage[]) ?? [];
       const newMsg: ChatMessage = {
         id: Date.now().toString(),
         text: message,
         sender: 'doctor',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
+      const updatedMessages = [...currentMessages, newMsg] as unknown as Json[];
       const { error } = await supabase
         .from('consultations')
-        .update({ messages: ([...currentMessages, newMsg] as unknown as any) })
+        .update({ messages: updatedMessages })
         .eq('id', activeChat);
       if (error) throw error;
     },
