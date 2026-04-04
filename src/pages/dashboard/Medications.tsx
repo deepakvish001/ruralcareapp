@@ -209,37 +209,21 @@ export default function Medications() {
   const inactiveMeds = medications.filter((m) => !m.active);
   const displayed = tab === 'active' ? activeMeds : inactiveMeds;
 
-  // Reminder notifications
-  useEffect(() => {
-    if (!remindersEnabled || !('Notification' in window)) return;
-    if (Notification.permission === 'default') Notification.requestPermission();
+  // Reminder notifications via dedicated hook
+  const { requestPermission } = useMedicationReminders(remindersEnabled, activeMeds, isTakenToday);
 
-    const interval = setInterval(() => {
-      if (Notification.permission !== 'granted') return;
-      const now = new Date();
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      activeMeds.forEach((med) => {
-        med.time_slots.forEach((slot) => {
-          if (slot === currentTime && !isTakenToday(med.id, slot)) {
-            new Notification('💊 Medication Reminder', {
-              body: `Time to take ${med.name} (${med.dosage})`,
-              icon: '/icons/icon-192x192.png',
-            });
-          }
-        });
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [remindersEnabled, activeMeds, todayLogs]);
-
-  const toggleReminders = () => {
+  const toggleReminders = async () => {
     const next = !remindersEnabled;
+    if (next) {
+      const granted = await requestPermission();
+      if (!granted) {
+        toast.error('Notification permission denied. Please enable in browser settings.');
+        return;
+      }
+    }
     setRemindersEnabled(next);
     localStorage.setItem('med-reminders', String(next));
-    if (next && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-    toast.success(next ? 'Reminders enabled' : 'Reminders disabled');
+    toast.success(next ? 'Reminders enabled — you\'ll get alerts at each dose time' : 'Reminders disabled');
   };
 
   const addTimeSlot = () => setTimeSlots([...timeSlots, '12:00']);
