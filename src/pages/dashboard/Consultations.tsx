@@ -21,7 +21,7 @@ export default function Consultations() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [newPatientName, setNewPatientName] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState('');
 
   const { data: patients = [] } = useQuery({
     queryKey: ['patients-list'],
