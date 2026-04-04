@@ -30,6 +30,7 @@ const translations: Record<Language, Record<string, string>> = {
     'role.patient': 'Patient',
     'role.healthWorker': 'Health Worker',
     'role.doctor': 'Doctor',
+    'role.admin': 'Admin',
     'role.patient.desc': 'Access symptom checker, first aid guides, and find nearby doctors',
     'role.healthWorker.desc': 'Register patients, track visits, manage follow-ups',
     'role.doctor.desc': 'Manage patient queue, consultations, and referrals',
