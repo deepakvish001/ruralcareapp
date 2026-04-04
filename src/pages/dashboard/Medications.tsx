@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Pill, Clock, Check, Trash2, Bell, BellOff, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Plus, Pill, Clock, Check, Trash2, Bell, BellOff, X, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
