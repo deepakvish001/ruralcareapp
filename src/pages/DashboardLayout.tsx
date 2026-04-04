@@ -11,6 +11,7 @@ import InstallPWA from '@/components/InstallPWA';
 export default function DashboardLayout() {
   const { role, t, user, loading, signOut } = useApp();
   const navigate = useNavigate();
+  const { pendingCount } = useOfflineQueue();
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
