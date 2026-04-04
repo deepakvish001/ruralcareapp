@@ -16,6 +16,7 @@ export default function PatientHome() {
     { icon: Heart, label: t('nav.firstAid'), path: '/dashboard/first-aid', color: 'bg-destructive/10 text-destructive', img: illustFirstaid },
     { icon: MapPin, label: t('nav.findDoctor'), path: '/dashboard/find-doctor', color: 'bg-success/10 text-success', img: illustFinddoctor },
     { icon: Phone, label: t('nav.emergency'), path: '/dashboard/emergency', color: 'bg-accent/10 text-accent-foreground', img: illustEmergency },
+    { icon: Pill, label: t('nav.medications') || 'Medications', path: '/dashboard/medications', color: 'bg-warning/10 text-warning-foreground', img: illustEmergency },
     { icon: Video, label: t('nav.telemedicine'), path: '/dashboard/telemedicine', color: 'bg-secondary text-secondary-foreground', img: illustTelemedicine },
   ];
 

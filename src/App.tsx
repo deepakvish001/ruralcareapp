@@ -58,6 +58,7 @@ const App = () => (
               <Route path="telemedicine" element={<Telemedicine />} />
               <Route path="video-call/:consultationId" element={<VideoCall />} />
               <Route path="appointments" element={<Appointments />} />
+              <Route path="medications" element={<Medications />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
