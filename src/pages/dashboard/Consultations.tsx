@@ -49,9 +49,9 @@ export default function Consultations() {
     enabled: isPatient,
   });
 
-  const { data: consultations = [], isLoading } = useQuery({
-    queryKey: ['consultations', role],
-    queryFn: async () => {
+  const { data: consultations = [], isLoading, isCached } = useOfflineCache(
+    ['consultations', role || ''],
+    async () => {
       let query = supabase
         .from('consultations')
         .select('*, patients(name)')
@@ -65,7 +65,7 @@ export default function Consultations() {
       if (error) throw error;
       return data;
     },
-  });
+  );
 
   // Realtime subscription
   useEffect(() => {
