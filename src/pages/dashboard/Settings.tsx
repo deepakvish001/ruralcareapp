@@ -12,6 +12,7 @@ export default function Settings() {
   const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { pendingCount } = useOfflineQueue();
 
   const languages: Language[] = ['en', 'hi', 'ta', 'te', 'bn'];
   const roles: { key: UserRole; label: string }[] = [
