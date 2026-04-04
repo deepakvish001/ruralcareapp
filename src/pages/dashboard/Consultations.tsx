@@ -126,8 +126,8 @@ export default function Consultations() {
       <div className="flex flex-col h-[calc(100vh-180px)] animate-fade-in-up">
         <div className="flex items-center gap-3 pb-3 border-b border-border">
           <button onClick={() => setActiveChat(null)} className="text-muted-foreground"><ChevronLeft className="h-5 w-5" /></button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
-          <h3 className="font-semibold text-foreground">Consultation</h3>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">{((activeConsultation as any).patients?.name?.[0] || 'C').toUpperCase()}</div>
+          <h3 className="font-semibold text-foreground">{(activeConsultation as any).patients?.name || 'Consultation'}</h3>
           <div className="ml-auto flex items-center gap-2">
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${activeConsultation.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
               {activeConsultation.status}
