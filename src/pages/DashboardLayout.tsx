@@ -22,6 +22,7 @@ export default function DashboardLayout() {
   const { role, t, user, loading, signOut } = useApp();
   const navigate = useNavigate();
   const { pendingCount } = useOfflineQueue();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
