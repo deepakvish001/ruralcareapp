@@ -41,7 +41,7 @@ function enqueue(action: Omit<QueuedAction, 'id' | 'createdAt' | 'retries'>) {
   writeQueue(queue);
 }
 
-function dequeue(id: string) {
+export function dequeue(id: string) {
   writeQueue(readQueue().filter((a) => a.id !== id));
 }
 
