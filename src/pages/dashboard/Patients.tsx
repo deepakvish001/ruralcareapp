@@ -23,6 +23,7 @@ export default function Patients() {
   const { t, user } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { enqueueAction, pendingCount } = useOfflineQueue();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
