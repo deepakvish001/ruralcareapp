@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, Plus, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, Plus, Search, Filter, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,7 +23,14 @@ export default function Patients() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [form, setForm] = useState({ name: '', age: '', gender: 'male', village: '', phone: '', conditions: '' });
+
+  // Filter state
+  const [filterVillage, setFilterVillage] = useState('');
+  const [filterCondition, setFilterCondition] = useState('');
+  const [filterAgeMin, setFilterAgeMin] = useState('');
+  const [filterAgeMax, setFilterAgeMax] = useState('');
 
   const { data: patients = [], isLoading } = useQuery({
     queryKey: ['patients'],
@@ -59,10 +66,38 @@ export default function Patients() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const filtered = patients.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p.village || '').toLowerCase().includes(search.toLowerCase())
-  );
+  // Derive unique villages and conditions for filter dropdowns
+  const villages = useMemo(() => {
+    const set = new Set(patients.map(p => p.village).filter(Boolean) as string[]);
+    return Array.from(set).sort();
+  }, [patients]);
+
+  const conditions = useMemo(() => {
+    const set = new Set(patients.flatMap(p => p.conditions || []));
+    return Array.from(set).sort();
+  }, [patients]);
+
+  const activeFilterCount = [filterVillage, filterCondition, filterAgeMin, filterAgeMax].filter(Boolean).length;
+
+  const filtered = useMemo(() => {
+    return patients.filter((p) => {
+      const matchesSearch = !search ||
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.village || '').toLowerCase().includes(search.toLowerCase());
+      const matchesVillage = !filterVillage || p.village === filterVillage;
+      const matchesCondition = !filterCondition || (p.conditions || []).includes(filterCondition);
+      const matchesAgeMin = !filterAgeMin || p.age >= parseInt(filterAgeMin);
+      const matchesAgeMax = !filterAgeMax || p.age <= parseInt(filterAgeMax);
+      return matchesSearch && matchesVillage && matchesCondition && matchesAgeMin && matchesAgeMax;
+    });
+  }, [patients, search, filterVillage, filterCondition, filterAgeMin, filterAgeMax]);
+
+  const clearFilters = () => {
+    setFilterVillage('');
+    setFilterCondition('');
+    setFilterAgeMin('');
+    setFilterAgeMax('');
+  };
 
   const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
@@ -71,12 +106,60 @@ export default function Patients() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">{t('patients.title')}</h2>
-        <span className="text-sm text-muted-foreground">{patients.length} {t('patients.totalPatients').toLowerCase()}</span>
+        <span className="text-sm text-muted-foreground">{filtered.length} of {patients.length}</span>
       </div>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('patients.search')} className="w-full rounded-lg border border-border bg-card pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('patients.search')} className="w-full rounded-lg border border-border bg-card pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <button onClick={() => setShowFilters(!showFilters)} className={`relative rounded-lg border px-3 py-3 transition-colors ${showFilters || activeFilterCount > 0 ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground'}`}>
+          <Filter className="h-4 w-4" />
+          {activeFilterCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full gradient-primary text-[9px] font-bold text-primary-foreground">{activeFilterCount}</span>
+          )}
+        </button>
       </div>
+
+      {showFilters && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card space-y-3 animate-fade-in-up">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-foreground">Filters</h4>
+            {activeFilterCount > 0 && (
+              <button onClick={clearFilters} className="flex items-center gap-1 text-xs text-primary hover:underline"><X className="h-3 w-3" /> Clear all</button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">{t('patients.village')}</label>
+              <select value={filterVillage} onChange={(e) => setFilterVillage(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
+                <option value="">All villages</option>
+                {villages.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">{t('patients.conditions')}</label>
+              <select value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
+                <option value="">All conditions</option>
+                {conditions.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Min Age</label>
+              <input type="number" value={filterAgeMin} onChange={(e) => setFilterAgeMin(e.target.value)} placeholder="0"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Max Age</label>
+              <input type="number" value={filterAgeMax} onChange={(e) => setFilterAgeMax(e.target.value)} placeholder="120"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Loading...</div>

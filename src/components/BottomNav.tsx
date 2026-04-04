@@ -12,7 +12,7 @@ const navItems: Record<UserRole, NavItem[]> = {
   patient: [
     { icon: Home, labelKey: 'nav.home', path: '/dashboard' },
     { icon: Stethoscope, labelKey: 'nav.symptoms', path: '/dashboard/symptoms' },
-    { icon: Heart, labelKey: 'nav.firstAid', path: '/dashboard/first-aid' },
+    { icon: CalendarCheck, labelKey: 'nav.appointments', path: '/dashboard/appointments' },
     { icon: MapPin, labelKey: 'nav.findDoctor', path: '/dashboard/find-doctor' },
   ],
   healthWorker: [
