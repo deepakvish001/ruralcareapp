@@ -272,13 +272,56 @@ export default function Medications() {
 
       {/* Tabs */}
       <div className="flex gap-2">
-        {(['active', 'history'] as const).map((key) => (
+        {(['active', 'history', 'adherence'] as const).map((key) => (
           <button key={key} onClick={() => setTab(key)}
             className={`flex-1 rounded-lg py-2 text-xs font-medium transition-colors capitalize ${tab === key ? 'gradient-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-            {key === 'active' ? `Active (${activeMeds.length})` : `Inactive (${inactiveMeds.length})`}
+            {key === 'active' ? `Active (${activeMeds.length})` : key === 'history' ? `Inactive (${inactiveMeds.length})` : 'Adherence'}
           </button>
         ))}
       </div>
+
+      {/* Adherence Chart */}
+      {tab === 'adherence' && (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Adherence</h3>
+              </div>
+              <div className="flex gap-1">
+                {(['week', 'month'] as const).map((r) => (
+                  <button key={r} onClick={() => setAdherenceRange(r)}
+                    className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${adherenceRange === r ? 'gradient-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    {r === 'week' ? '7 Days' : '30 Days'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-center mb-3">
+              <p className="text-3xl font-bold text-foreground">{overallAdherence}%</p>
+              <p className="text-xs text-muted-foreground">overall adherence</p>
+            </div>
+
+            {adherenceData.some((d) => d.taken + d.missed > 0) ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={adherenceData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="taken" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} name="Taken" />
+                  <Bar dataKey="missed" stackId="a" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="Missed" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">No data yet — start logging doses!</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Loading...</div>
