@@ -21,14 +21,23 @@ export default function Consultations() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [newPatientName, setNewPatientName] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+
+  const { data: patients = [] } = useQuery({
+    queryKey: ['patients-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('patients').select('id, name');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: consultations = [], isLoading } = useQuery({
     queryKey: ['consultations'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('consultations')
-        .select('*')
+        .select('*, patients(name)')
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data;
@@ -36,9 +45,10 @@ export default function Consultations() {
   });
 
   const createConsultation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (patientId?: string) => {
       const { error } = await supabase.from('consultations').insert({
         doctor_id: user?.id!,
+        patient_id: patientId || null,
         messages: [],
         status: 'active',
       });
@@ -47,7 +57,7 @@ export default function Consultations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultations'] });
       setShowForm(false);
-      setNewPatientName('');
+      setSelectedPatientId('');
       toast.success('Consultation created');
     },
     onError: (err: any) => toast.error(err.message),
@@ -116,8 +126,8 @@ export default function Consultations() {
       <div className="flex flex-col h-[calc(100vh-180px)] animate-fade-in-up">
         <div className="flex items-center gap-3 pb-3 border-b border-border">
           <button onClick={() => setActiveChat(null)} className="text-muted-foreground"><ChevronLeft className="h-5 w-5" /></button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
-          <h3 className="font-semibold text-foreground">Consultation</h3>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">{((activeConsultation as any).patients?.name?.[0] || 'C').toUpperCase()}</div>
+          <h3 className="font-semibold text-foreground">{(activeConsultation as any).patients?.name || 'Consultation'}</h3>
           <div className="ml-auto flex items-center gap-2">
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${activeConsultation.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
               {activeConsultation.status}
@@ -175,10 +185,10 @@ export default function Consultations() {
             const lastMsg = msgs[msgs.length - 1];
             return (
               <button key={c.id} onClick={() => setActiveChat(c.id)} className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card text-left">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">{((c as any).patients?.name?.[0] || 'C').toUpperCase()}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-foreground">Consultation</h3>
+                    <h3 className="font-semibold text-foreground">{(c as any).patients?.name || 'Consultation'}</h3>
                     <span className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</span>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{lastMsg?.text || 'No messages yet'}</p>
@@ -190,9 +200,29 @@ export default function Consultations() {
         </div>
       )}
 
-      <button onClick={() => createConsultation.mutate()} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
-        <Plus className="h-5 w-5" /> New Consultation
-      </button>
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
+          <Plus className="h-5 w-5" /> New Consultation
+        </button>
+      ) : (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm rounded-xl border border-border bg-card p-4 shadow-elevated space-y-3">
+          <h4 className="font-semibold text-foreground text-sm">Select Patient</h4>
+          <select
+            value={selectedPatientId}
+            onChange={(e) => setSelectedPatientId(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">No patient (general)</option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button onClick={() => setShowForm(false)} className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">Cancel</button>
+            <button onClick={() => createConsultation.mutate(selectedPatientId || undefined)} className="flex-1 rounded-lg gradient-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Create</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
