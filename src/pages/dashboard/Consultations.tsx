@@ -1,5 +1,5 @@
 import { ArrowLeft, Send, ChevronLeft, Plus, X, Trash2, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +15,7 @@ interface ChatMessage {
 }
 
 export default function Consultations() {
-  const { t, user } = useApp();
+  const { t, user, role } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -25,6 +25,9 @@ export default function Consultations() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
 
+  const isPatient = role === 'patient';
+  const senderRole = isPatient ? 'patient' : 'doctor';
+
   const { data: patients = [] } = useQuery({
     queryKey: ['patients-list'],
     queryFn: async () => {
@@ -32,19 +35,47 @@ export default function Consultations() {
       if (error) throw error;
       return data;
     },
+    enabled: !isPatient,
+  });
+
+  const { data: doctors = [] } = useQuery({
+    queryKey: ['doctors-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('doctors').select('id, name, user_id');
+      if (error) throw error;
+      return data;
+    },
+    enabled: isPatient,
   });
 
   const { data: consultations = [], isLoading } = useQuery({
-    queryKey: ['consultations'],
+    queryKey: ['consultations', role],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('consultations')
         .select('*, patients(name)')
         .order('updated_at', { ascending: false });
+
+      if (isPatient) {
+        query = query.eq('patient_user_id', user?.id!);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('consultations-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'consultations' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   const createConsultation = useMutation({
     mutationFn: async (patientId?: string) => {
@@ -73,7 +104,7 @@ export default function Consultations() {
       const newMsg: ChatMessage = {
         id: Date.now().toString(),
         text: message,
-        sender: 'doctor',
+        sender: senderRole,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       const updatedMessages = [...currentMessages, newMsg] as unknown as Json[];
@@ -91,10 +122,7 @@ export default function Consultations() {
 
   const closeConsultation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('consultations')
-        .update({ status: 'closed' })
-        .eq('id', id);
+      const { error } = await supabase.from('consultations').update({ status: 'closed' }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -106,10 +134,7 @@ export default function Consultations() {
 
   const deleteConsultation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('consultations')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('consultations').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -122,8 +147,10 @@ export default function Consultations() {
 
   const activeConsultation = consultations.find((c) => c.id === activeChat);
 
+  // Chat view
   if (activeChat && activeConsultation) {
     const messages = (activeConsultation.messages as unknown as ChatMessage[]) || [];
+    const canSend = activeConsultation.status === 'active';
     return (
       <div className="flex flex-col h-[calc(100vh-180px)] animate-fade-in-up">
         <div className="flex items-center gap-3 pb-3 border-b border-border">
@@ -134,41 +161,48 @@ export default function Consultations() {
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${activeConsultation.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
               {activeConsultation.status}
             </span>
-            {activeConsultation.status === 'active' && (
+            {activeConsultation.status === 'active' && !isPatient && (
               <button onClick={() => closeConsultation.mutate(activeChat)} className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground" title="Close consultation">
                 <X className="h-4 w-4" />
               </button>
             )}
-            <button onClick={() => { if (confirm('Delete this consultation?')) deleteConsultation.mutate(activeChat); }} className="rounded-lg border border-destructive/30 p-1.5 text-destructive hover:bg-destructive/10" title="Delete consultation">
-              <Trash2 className="h-4 w-4" />
-            </button>
+            {!isPatient && (
+              <button onClick={() => { if (confirm('Delete this consultation?')) deleteConsultation.mutate(activeChat); }} className="rounded-lg border border-destructive/30 p-1.5 text-destructive hover:bg-destructive/10" title="Delete consultation">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
           {messages.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No messages yet. Start the conversation.</p>}
-          {messages.map((m) => (
-            <div key={m.id} className={`flex ${m.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                m.sender === 'doctor' ? 'gradient-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'
-              }`}>
-                <p className="text-sm">{m.text}</p>
-                <p className={`text-[10px] mt-1 ${m.sender === 'doctor' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>{m.time}</p>
+          {messages.map((m) => {
+            const isMe = m.sender === senderRole;
+            return (
+              <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                  isMe ? 'gradient-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'
+                }`}>
+                  <p className="text-sm">{m.text}</p>
+                  <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>{m.time}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <div className="flex gap-2 pt-3 border-t border-border">
-          <input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && message.trim() && sendMessage.mutate()}
-            placeholder={t('consultations.typeMessage')}
-            className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
-          />
-          <button onClick={() => message.trim() && sendMessage.mutate()} disabled={!message.trim()} className="rounded-lg gradient-primary p-2.5 text-primary-foreground disabled:opacity-50">
-            <Send className="h-5 w-5" />
-          </button>
-        </div>
+        {canSend && (
+          <div className="flex gap-2 pt-3 border-t border-border">
+            <input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && message.trim() && sendMessage.mutate()}
+              placeholder={t('consultations.typeMessage')}
+              className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+            <button onClick={() => message.trim() && sendMessage.mutate()} disabled={!message.trim()} className="rounded-lg gradient-primary p-2.5 text-primary-foreground disabled:opacity-50">
+              <Send className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -233,11 +267,13 @@ export default function Consultations() {
         </div>
       )}
 
-      {!showForm ? (
+      {!isPatient && !showForm && (
         <button onClick={() => setShowForm(true)} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
           <Plus className="h-5 w-5" /> New Consultation
         </button>
-      ) : (
+      )}
+
+      {!isPatient && showForm && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm rounded-xl border border-border bg-card p-4 shadow-elevated space-y-3">
           <h4 className="font-semibold text-foreground text-sm">Select Patient</h4>
           <select
