@@ -63,9 +63,10 @@ export default function Consultations() {
         sender: 'doctor',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
+      const updatedMessages = [...currentMessages, newMsg] as unknown as Json[];
       const { error } = await supabase
         .from('consultations')
-        .update({ messages: ([...currentMessages, newMsg] as unknown as any) })
+        .update({ messages: updatedMessages })
         .eq('id', activeChat);
       if (error) throw error;
     },
