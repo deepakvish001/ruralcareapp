@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 export default function Settings() {
-  const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user } = useApp();
+  const { t, language, setLanguage, darkMode, setDarkMode, role, setRole, signOut, user, isAdmin } = useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pendingCount } = useOfflineQueue();
