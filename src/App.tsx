@@ -60,6 +60,7 @@ const App = () => (
               <Route path="video-call/:consultationId" element={<VideoCall />} />
               <Route path="appointments" element={<Appointments />} />
               <Route path="medications" element={<Medications />} />
+              <Route path="sync" element={<SyncStatus />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
