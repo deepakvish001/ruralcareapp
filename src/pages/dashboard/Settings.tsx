@@ -1,4 +1,14 @@
 import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2, CloudOff } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, UserRole } from '@/contexts/AppContext';
@@ -13,6 +23,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pendingCount } = useOfflineQueue();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   const languages: Language[] = ['en', 'hi', 'ta', 'te', 'bn'];
   const roles: { key: UserRole; label: string }[] = [
@@ -256,7 +267,7 @@ export default function Settings() {
 
       {/* Sign Out */}
       <button
-        onClick={handleSignOut}
+        onClick={() => setShowSignOutDialog(true)}
         className="w-full flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-destructive font-medium hover:bg-destructive/10 transition-colors"
       >
         <LogOut className="h-5 w-5" />
@@ -273,6 +284,26 @@ export default function Settings() {
           RuralCare v1.0 — Healthcare access for every village. Built with ❤️ for rural India.
         </p>
       </div>
+
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? Any unsaved changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSignOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
