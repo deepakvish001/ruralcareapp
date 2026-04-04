@@ -5,6 +5,8 @@ import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
 
 interface ChatMessage {
   id: string;
