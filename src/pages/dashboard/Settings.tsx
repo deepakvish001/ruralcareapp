@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2, CloudOff } from 'lucide-react';
+import { ArrowLeft, Globe, Moon, Sun, UserCog, Info, LogOut, Stethoscope, Save, Loader2, CloudOff, Mail } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -235,8 +235,15 @@ export default function Settings() {
           {roles.find((r) => r.key === role)?.label || role}
         </p>
         <p className="mt-1 text-xs text-muted-foreground/70">
-          Your role was set when you first signed up and cannot be changed.
+          Your role was set when you first signed up.
         </p>
+        <a
+          href="mailto:support@ruralcare.app?subject=Role%20Change%20Request&body=Hi%2C%20I%20would%20like%20to%20change%20my%20role.%0A%0ACurrent%20role%3A%20{role}%0ADesired%20role%3A%20%0AReason%3A%20"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <Mail className="h-3.5 w-3.5" />
+          Request Role Change
+        </a>
       </div>
 
       {/* Offline Sync */}
