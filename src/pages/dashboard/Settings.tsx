@@ -235,6 +235,25 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Offline Sync */}
+      <button
+        onClick={() => navigate('/dashboard/sync')}
+        className="w-full rounded-xl border border-border bg-card p-4 shadow-card flex items-center justify-between hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <CloudOff className="h-5 w-5 text-primary" />
+          <div className="text-left">
+            <h3 className="font-semibold text-foreground text-sm">Offline Sync Queue</h3>
+            <p className="text-xs text-muted-foreground">View and manage pending offline actions</p>
+          </div>
+        </div>
+        {pendingCount > 0 && (
+          <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full gradient-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+            {pendingCount}
+          </span>
+        )}
+      </button>
+
       {/* Sign Out */}
       <button
         onClick={handleSignOut}
