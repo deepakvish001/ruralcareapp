@@ -154,17 +154,22 @@ export default function Medications() {
 
   const logMedication = useMutation({
     mutationFn: async ({ medicationId, scheduledTime }: { medicationId: string; scheduledTime: string }) => {
-      const { error } = await supabase.from('medication_logs').insert({
+      const payload = {
         medication_id: medicationId,
         user_id: user!.id,
         scheduled_time: scheduledTime,
         status: 'taken',
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'medication_logs', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('medication_logs').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medication-logs-today'] });
-      toast.success('Marked as taken ✓');
+      if (navigator.onLine) toast.success('Marked as taken ✓');
     },
   });
 
