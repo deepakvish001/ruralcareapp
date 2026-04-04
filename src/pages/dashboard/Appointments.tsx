@@ -162,7 +162,6 @@ export default function Appointments() {
           {displayed.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No {tab} appointments</p>}
         </div>
       )}
-    </div>
 
       {isPatient && (
         <button onClick={() => setShowForm(true)} className="fixed bottom-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
