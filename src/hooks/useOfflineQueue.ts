@@ -17,7 +17,7 @@ export interface QueuedAction {
 
 const QUEUE_KEY = 'offline_sync_queue';
 
-function readQueue(): QueuedAction[] {
+export function readQueue(): QueuedAction[] {
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
     return raw ? (JSON.parse(raw) as QueuedAction[]) : [];
