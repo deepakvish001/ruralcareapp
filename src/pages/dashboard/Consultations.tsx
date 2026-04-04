@@ -185,10 +185,10 @@ export default function Consultations() {
             const lastMsg = msgs[msgs.length - 1];
             return (
               <button key={c.id} onClick={() => setActiveChat(c.id)} className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card text-left">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">{((c as any).patients?.name?.[0] || 'C').toUpperCase()}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-foreground">Consultation</h3>
+                    <h3 className="font-semibold text-foreground">{(c as any).patients?.name || 'Consultation'}</h3>
                     <span className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</span>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{lastMsg?.text || 'No messages yet'}</p>
