@@ -1,37 +1,68 @@
-import { ArrowLeft, Video, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Video, Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-
-interface TeleconsultRequest {
-  patient: string;
-  age: number;
-  village: string;
-  symptoms: string;
-  status: 'pending' | 'accepted' | 'declined';
-  date: string;
-  response?: string;
-}
-
-const mockRequests: TeleconsultRequest[] = [
-  { patient: 'Ganesh Prasad', age: 60, village: 'Rampur', symptoms: 'Persistent cough for 2 weeks, blood in sputum', status: 'pending', date: 'Apr 4' },
-  { patient: 'Parvati Devi', age: 35, village: 'Sundarpur', symptoms: 'Severe headache, blurred vision', status: 'pending', date: 'Apr 3' },
-  { patient: 'Bhola Nath', age: 50, village: 'Khandpur', symptoms: 'Chest pain during exertion', status: 'accepted', date: 'Apr 2', response: 'Prescribed Aspirin 75mg. Advised ECG at district hospital.' },
-  { patient: 'Maya Kumari', age: 28, village: 'Rampur', symptoms: 'Recurring stomach ache', status: 'declined', date: 'Apr 1', response: 'Patient needs in-person examination. Referred to PHC.' },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const statusConfig = {
-  pending: { icon: Clock, color: 'bg-warning/10 text-warning-foreground', label: 'Pending' },
-  accepted: { icon: CheckCircle, color: 'bg-success/10 text-success', label: 'Accepted' },
-  declined: { icon: XCircle, color: 'bg-destructive/10 text-destructive', label: 'Declined' },
+  active: { icon: Clock, color: 'bg-warning/10 text-warning-foreground', label: 'Pending' },
+  closed: { icon: CheckCircle, color: 'bg-success/10 text-success', label: 'Completed' },
 };
 
 export default function Telemedicine() {
-  const { t } = useApp();
+  const { t, user, role } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'pending' | 'accepted' | 'declined'>('pending');
+  const queryClient = useQueryClient();
+  const [tab, setTab] = useState<'active' | 'closed'>('active');
+  const [showForm, setShowForm] = useState(false);
+  const [symptoms, setSymptoms] = useState('');
 
-  const filtered = mockRequests.filter((r) => r.status === tab);
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ['telemedicine'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('consultations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const submitRequest = useMutation({
+    mutationFn: async () => {
+      // For patients, create a consultation request
+      const { error } = await supabase.from('consultations').insert({
+        patient_user_id: user?.id,
+        doctor_id: user?.id!, // Placeholder — in real app would be assigned
+        messages: [{ id: Date.now().toString(), text: symptoms, sender: 'patient', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }],
+        status: 'active',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['telemedicine'] });
+      setShowForm(false);
+      setSymptoms('');
+      toast.success('Telemedicine request submitted');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from('consultations').update({ status }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['telemedicine'] });
+      toast.success('Status updated');
+    },
+  });
+
+  const filtered = requests.filter((r) => r.status === tab);
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -41,44 +72,63 @@ export default function Telemedicine() {
         <h2 className="text-xl font-bold text-foreground">{t('telemedicine.title')}</h2>
       </div>
       <div className="flex gap-2">
-        {(['pending', 'accepted', 'declined'] as const).map((key) => (
+        {(['active', 'closed'] as const).map((key) => (
           <button key={key} onClick={() => setTab(key)}
             className={`flex-1 rounded-lg py-2 text-xs font-medium transition-colors ${tab === key ? 'gradient-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-            {t(`telemedicine.${key}`)}
+            {key === 'active' ? 'Pending' : 'Completed'}
           </button>
         ))}
       </div>
-      <div className="space-y-3">
-        {filtered.map((r, i) => {
-          const config = statusConfig[r.status];
-          return (
-            <div key={i} className="rounded-xl border border-border bg-card p-4 shadow-card">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-semibold text-foreground">{r.patient}, {r.age}</h3>
-                  <p className="text-xs text-muted-foreground">{r.village} · {r.date}</p>
+
+      {isLoading ? (
+        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((r) => {
+            const config = statusConfig[r.status as keyof typeof statusConfig] || statusConfig.active;
+            const messages = (r.messages as any[]) || [];
+            const firstMsg = messages[0];
+            return (
+              <div key={r.id} className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 className="font-semibold text-foreground">Teleconsultation</h3>
+                    <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.color}`}>
+                    <config.icon className="h-3 w-3" /> {config.label}
+                  </span>
                 </div>
-                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.color}`}>
-                  <config.icon className="h-3 w-3" /> {config.label}
-                </span>
+                {firstMsg && <p className="text-sm text-foreground">{firstMsg.text}</p>}
+                {r.status === 'active' && role === 'doctor' && (
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={() => updateStatus.mutate({ id: r.id, status: 'closed' })} className="flex-1 rounded-lg gradient-primary py-2 text-xs font-semibold text-primary-foreground">Complete</button>
+                  </div>
+                )}
               </div>
-              <p className="text-sm text-foreground">{r.symptoms}</p>
-              {r.response && (
-                <div className="mt-3 rounded-lg bg-muted p-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Doctor's Response:</p>
-                  <p className="text-sm text-foreground">{r.response}</p>
-                </div>
-              )}
-              {r.status === 'pending' && (
-                <div className="mt-3 flex gap-2">
-                  <button className="flex-1 rounded-lg gradient-primary py-2 text-xs font-semibold text-primary-foreground">Accept</button>
-                  <button className="flex-1 rounded-lg border border-border py-2 text-xs font-semibold text-foreground hover:bg-muted">Decline</button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+          {filtered.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No requests</p>}
+        </div>
+      )}
+
+      {role === 'patient' && (
+        <button onClick={() => setShowForm(true)} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
+          <Plus className="h-5 w-5" /> Request Consultation
+        </button>
+      )}
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/40" onClick={() => setShowForm(false)}>
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-card p-6 shadow-elevated animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-foreground mb-4">Describe Your Symptoms</h3>
+            <textarea value={symptoms} onChange={(e) => setSymptoms(e.target.value)} rows={4} placeholder="Describe what you're experiencing..." className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none resize-none" />
+            <button onClick={() => submitRequest.mutate()} disabled={!symptoms.trim() || submitRequest.isPending} className="mt-4 w-full rounded-lg gradient-primary py-3 font-semibold text-primary-foreground disabled:opacity-50">
+              {submitRequest.isPending ? '...' : 'Submit Request'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

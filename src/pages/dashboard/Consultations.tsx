@@ -1,56 +1,97 @@
-import { ArrowLeft, Send, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, Send, ChevronLeft, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
-interface Chat {
-  id: string;
-  patient: string;
-  lastMessage: string;
-  unread: number;
-  time: string;
-}
-
-interface Message {
+interface ChatMessage {
   id: string;
   text: string;
   sender: 'doctor' | 'patient';
   time: string;
 }
 
-const mockChats: Chat[] = [
-  { id: '1', patient: 'Lakshmi Devi', lastMessage: 'Doctor, my fever is still not going down', unread: 2, time: '2 min ago' },
-  { id: '2', patient: 'Ramu Singh', lastMessage: 'Thank you for the prescription', unread: 0, time: '1 hour ago' },
-  { id: '3', patient: 'Sita Kumari', lastMessage: 'When should I take the medicine?', unread: 1, time: '3 hours ago' },
-];
-
-const mockMessages: Message[] = [
-  { id: '1', text: 'Hello Doctor, I have been having fever for 2 days', sender: 'patient', time: '10:00 AM' },
-  { id: '2', text: 'How high is the temperature? Any other symptoms?', sender: 'doctor', time: '10:05 AM' },
-  { id: '3', text: 'It was 101°F this morning. I also have body pain and headache', sender: 'patient', time: '10:10 AM' },
-  { id: '4', text: 'Take Paracetamol 500mg twice a day. Drink plenty of fluids. If fever persists for more than 3 days, visit the PHC.', sender: 'doctor', time: '10:15 AM' },
-  { id: '5', text: 'Doctor, my fever is still not going down', sender: 'patient', time: '2:30 PM' },
-];
-
 export default function Consultations() {
-  const { t } = useApp();
+  const { t, user } = useApp();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [newPatientName, setNewPatientName] = useState('');
 
-  if (activeChat) {
-    const chat = mockChats.find((c) => c.id === activeChat);
+  const { data: consultations = [], isLoading } = useQuery({
+    queryKey: ['consultations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('consultations')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const createConsultation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('consultations').insert({
+        doctor_id: user?.id!,
+        messages: [],
+        status: 'active',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      setShowForm(false);
+      setNewPatientName('');
+      toast.success('Consultation created');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const sendMessage = useMutation({
+    mutationFn: async () => {
+      const consultation = consultations.find((c) => c.id === activeChat);
+      if (!consultation) return;
+      const currentMessages = (consultation.messages as ChatMessage[]) || [];
+      const newMsg: ChatMessage = {
+        id: Date.now().toString(),
+        text: message,
+        sender: 'doctor',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      const { error } = await supabase
+        .from('consultations')
+        .update({ messages: [...currentMessages, newMsg] })
+        .eq('id', activeChat);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setMessage('');
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+    },
+  });
+
+  const activeConsultation = consultations.find((c) => c.id === activeChat);
+
+  if (activeChat && activeConsultation) {
+    const messages = (activeConsultation.messages as ChatMessage[]) || [];
     return (
       <div className="flex flex-col h-[calc(100vh-180px)] animate-fade-in-up">
         <div className="flex items-center gap-3 pb-3 border-b border-border">
           <button onClick={() => setActiveChat(null)} className="text-muted-foreground"><ChevronLeft className="h-5 w-5" /></button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
-            {chat?.patient.charAt(0)}
-          </div>
-          <h3 className="font-semibold text-foreground">{chat?.patient}</h3>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
+          <h3 className="font-semibold text-foreground">Consultation</h3>
+          <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium ${activeConsultation.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+            {activeConsultation.status}
+          </span>
         </div>
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
-          {mockMessages.map((m) => (
+          {messages.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No messages yet. Start the conversation.</p>}
+          {messages.map((m) => (
             <div key={m.id} className={`flex ${m.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                 m.sender === 'doctor' ? 'gradient-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'
@@ -65,10 +106,11 @@ export default function Consultations() {
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && message.trim() && sendMessage.mutate()}
             placeholder={t('consultations.typeMessage')}
             className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
           />
-          <button className="rounded-lg gradient-primary p-2.5 text-primary-foreground">
+          <button onClick={() => message.trim() && sendMessage.mutate()} disabled={!message.trim()} className="rounded-lg gradient-primary p-2.5 text-primary-foreground disabled:opacity-50">
             <Send className="h-5 w-5" />
           </button>
         </div>
@@ -80,27 +122,34 @@ export default function Consultations() {
     <div className="space-y-4 animate-fade-in-up">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground text-sm"><ArrowLeft className="h-4 w-4" /> Back</button>
       <h2 className="text-xl font-bold text-foreground">{t('consultations.title')}</h2>
-      <div className="space-y-3">
-        {mockChats.map((chat) => (
-          <button key={chat.id} onClick={() => setActiveChat(chat.id)} className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card text-left">
-            <div className="relative">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
-                {chat.patient.charAt(0)}
-              </div>
-              {chat.unread > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">{chat.unread}</span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">{chat.patient}</h3>
-                <span className="text-xs text-muted-foreground">{chat.time}</span>
-              </div>
-              <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
-            </div>
-          </button>
-        ))}
-      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+      ) : (
+        <div className="space-y-3">
+          {consultations.map((c) => {
+            const msgs = (c.messages as ChatMessage[]) || [];
+            const lastMsg = msgs[msgs.length - 1];
+            return (
+              <button key={c.id} onClick={() => setActiveChat(c.id)} className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card text-left">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">C</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-foreground">Consultation</h3>
+                    <span className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">{lastMsg?.text || 'No messages yet'}</p>
+                </div>
+              </button>
+            );
+          })}
+          {consultations.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No consultations yet</p>}
+        </div>
+      )}
+
+      <button onClick={() => createConsultation.mutate()} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full gradient-primary px-6 py-3 font-semibold text-primary-foreground shadow-elevated transition-transform hover:scale-105">
+        <Plus className="h-5 w-5" /> New Consultation
+      </button>
     </div>
   );
 }
