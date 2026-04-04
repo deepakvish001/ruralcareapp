@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Heart, Stethoscope, Activity, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useApp, UserRole } from '@/contexts/AppContext';
