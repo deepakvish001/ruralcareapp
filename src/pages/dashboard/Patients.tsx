@@ -49,7 +49,7 @@ export default function Patients() {
 
   const addPatient = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('patients').insert({
+      const payload = {
         name: form.name,
         age: parseInt(form.age) || 0,
         gender: form.gender,
@@ -57,14 +57,19 @@ export default function Patients() {
         phone: form.phone || null,
         conditions: form.conditions ? form.conditions.split(',').map((c) => c.trim()) : [],
         registered_by: user?.id,
-      });
+      };
+      if (!navigator.onLine) {
+        enqueueAction({ table: 'patients', type: 'insert', payload });
+        return;
+      }
+      const { error } = await supabase.from('patients').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       setShowForm(false);
       setForm({ name: '', age: '', gender: 'male', village: '', phone: '', conditions: '' });
-      toast.success(t('patients.saved') || 'Patient registered!');
+      if (navigator.onLine) toast.success(t('patients.saved') || 'Patient registered!');
     },
     onError: (err: any) => toast.error(err.message),
   });
