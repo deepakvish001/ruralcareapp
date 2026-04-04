@@ -33,9 +33,9 @@ export default function Patients() {
   const [filterAgeMin, setFilterAgeMin] = useState('');
   const [filterAgeMax, setFilterAgeMax] = useState('');
 
-  const { data: patients = [], isLoading } = useQuery({
-    queryKey: ['patients'],
-    queryFn: async () => {
+  const { data: patients = [], isLoading, isCached } = useOfflineCache<Patient[]>(
+    ['patients'],
+    async () => {
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -43,7 +43,7 @@ export default function Patients() {
       if (error) throw error;
       return data as Patient[];
     },
-  });
+  );
 
   const addPatient = useMutation({
     mutationFn: async () => {
