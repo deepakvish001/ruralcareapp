@@ -7,6 +7,19 @@ interface ReminderMed {
   time_slots: string[];
 }
 
+// How late a reminder can still fire after its scheduled slot. Backgrounded
+// or screen-locked mobile tabs get their setInterval throttled by the
+// browser (sometimes suspended entirely), so the poll that's supposed to
+// catch the exact HH:MM minute can easily miss it — without a grace window
+// a missed tick means that dose's reminder never fires for the rest of the
+// day.
+const REMINDER_GRACE_WINDOW_MINUTES = 60;
+
+function toMinutesSinceMidnight(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
 /**
  * Schedules browser notifications for medication time slots.
  * Checks every 30s so we don't miss the minute window.
@@ -38,13 +51,15 @@ export function useMedicationReminders(
       if (Notification.permission !== 'granted') return;
 
       const now = new Date();
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
       const today = now.toISOString().split('T')[0];
 
       medications.forEach((med) => {
         med.time_slots.forEach((slot) => {
           const key = `${med.id}_${slot}_${today}`;
-          if (slot === currentTime && !isTakenToday(med.id, slot) && !firedRef.current.has(key)) {
+          const slotMinutes = toMinutesSinceMidnight(slot);
+          const isDue = nowMinutes >= slotMinutes && nowMinutes < slotMinutes + REMINDER_GRACE_WINDOW_MINUTES;
+          if (isDue && !isTakenToday(med.id, slot) && !firedRef.current.has(key)) {
             firedRef.current.add(key);
             new Notification('💊 Medication Reminder', {
               body: `Time to take ${med.name} (${med.dosage})`,
